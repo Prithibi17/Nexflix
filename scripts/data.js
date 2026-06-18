@@ -272,6 +272,36 @@ const API = {
                     queryParams.push(`first_air_date_year=${params.year}`);
                 }
             }
+            
+            if (params.rating) {
+                queryParams.push(`vote_average.gte=${params.rating}`);
+            }
+            
+            if (params.runtime) {
+                if (params.runtime.includes('-')) {
+                    const [min, max] = params.runtime.split('-');
+                    queryParams.push(`with_runtime.gte=${min}`);
+                    queryParams.push(`with_runtime.lte=${max}`);
+                } else if (params.runtime.includes('+')) {
+                    const min = params.runtime.replace('+', '');
+                    queryParams.push(`with_runtime.gte=${min}`);
+                } else if (params.runtime.includes('Under')) {
+                    const max = params.runtime.replace('Under ', '');
+                    queryParams.push(`with_runtime.lte=${max}`);
+                }
+            }
+            
+            if (params.keywords && params.keywords.length > 0) {
+                queryParams.push(`with_keywords=${params.keywords.join('|')}`); // using | for OR
+            }
+            
+            if (params.companies && params.companies.length > 0) {
+                queryParams.push(`with_companies=${params.companies.join('|')}`);
+            }
+            
+            if (params.networks && params.networks.length > 0) {
+                queryParams.push(`with_networks=${params.networks.join('|')}`);
+            }
         }
 
         const data = await API.fetchData(`${endpoint}?${queryParams.join('&')}`);
