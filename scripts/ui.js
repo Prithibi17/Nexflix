@@ -863,62 +863,63 @@ const UI = {
 
         let html = `
             <div class="filter-dashboard-container">
-                <h1 style="color: #ff3c5b; margin-bottom: 20px; font-size: 2rem;">Filters</h1>
+                <h1 class="filter-page-title">Filters</h1>
                 
-                <div class="filter-bar">
-                    <div class="filter-search-box">
-                        <input type="text" id="filter-search-input" placeholder="Search..." oninput="UI.debounceFilterSearch(this.value)">
+                <div class="filter-controls-container">
+                    <div class="filter-controls-row">
+                        <div class="filter-search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="filter-search-input" placeholder="Search..." oninput="UI.updateFilterSearch(this.value)">
+                        </div>
+                        ${buildDropdown('genres', 'Select genre', genreOptions)}
+                        ${buildDropdown('status', 'Select status', [
+                            { id: 0, label: 'Releasing' },
+                            { id: 3, label: 'Completed' }
+                        ])}
+                        ${buildDropdown('country', 'Select country', [
+                            { id: 'US', label: 'United States' },
+                            { id: 'JP', label: 'Japan' },
+                            { id: 'KR', label: 'South Korea' },
+                            { id: 'CN', label: 'China' },
+                            { id: 'GB', label: 'United Kingdom' }
+                        ], 'radio')}
+                        ${buildDropdown('language', 'Select language', [
+                            { id: 'en', label: 'English' },
+                            { id: 'ja', label: 'Japanese' },
+                            { id: 'ko', label: 'Korean' },
+                            { id: 'zh', label: 'Chinese' },
+                            { id: 'es', label: 'Spanish' },
+                            { id: 'fr', label: 'French' }
+                        ], 'radio')}
+                        ${buildDropdown('year', 'Select year', [
+                            { id: '2026', label: '2026' },
+                            { id: '2025', label: '2025' },
+                            { id: '2024', label: '2024' },
+                            { id: '2023', label: '2023' }
+                        ], 'radio')}
+                        ${buildDropdown('sort', 'Sort by', [
+                            { id: 'popularity.desc', label: 'Most Popular' },
+                            { id: 'vote_average.desc', label: 'Highest Rated' },
+                            { id: 'primary_release_date.desc', label: 'Recently Added' }
+                        ], 'radio')}
                     </div>
-                    ${buildDropdown('genres', 'Select genre', genreOptions)}
-                    ${buildDropdown('status', 'Select status', [
-                        { id: 0, label: 'Releasing' },
-                        { id: 3, label: 'Completed' }
-                    ])}
-                    ${buildDropdown('country', 'Select country', [
-                        { id: 'US', label: 'United States' },
-                        { id: 'JP', label: 'Japan' },
-                        { id: 'KR', label: 'South Korea' },
-                        { id: 'CN', label: 'China' },
-                        { id: 'GB', label: 'United Kingdom' }
-                    ], 'radio')}
-                    ${buildDropdown('language', 'Select language', [
-                        { id: 'en', label: 'English' },
-                        { id: 'ja', label: 'Japanese' },
-                        { id: 'ko', label: 'Korean' },
-                        { id: 'zh', label: 'Chinese' },
-                        { id: 'es', label: 'Spanish' },
-                        { id: 'fr', label: 'French' }
-                    ], 'radio')}
-                    ${buildDropdown('year', 'Select year', [
-                        { id: '2026', label: '2026' },
-                        { id: '2025', label: '2025' },
-                        { id: '2024', label: '2024' },
-                        { id: '2023', label: '2023' }
-                    ], 'radio')}
-                    ${buildDropdown('sort', 'Sort by', [
-                        { id: 'popularity.desc', label: 'Most Popular' },
-                        { id: 'vote_average.desc', label: 'Highest Rated' },
-                        { id: 'primary_release_date.desc', label: 'Recently Added' }
-                    ], 'radio')}
-                    ${buildDropdown('type', 'Select Type', [
-                        { id: 'tv', label: 'TV Shows' },
-                        { id: 'anime', label: 'Anime' },
-                        { id: 'movie', label: 'Movies' }
-                    ], 'radio')}
-                    
-                    <button class="filter-btn" onclick="UI.applyFilters()"><i class="fas fa-filter"></i> Filter</button>
+                    <div class="filter-controls-row">
+                        ${buildDropdown('type', 'Select Type', [
+                            { id: 'tv', label: 'TV Shows' },
+                            { id: 'movie', label: 'Movies' }
+                        ], 'radio')}
+                        
+                        <button class="filter-submit-btn" onclick="UI.triggerFilterSearch()"><i class="fas fa-filter"></i> Filter</button>
+                    </div>
                 </div>
 
-                <div id="filter-results-container" class="dashboard-grid" style="margin-top: 30px;">
+                <div id="filter-results-container" class="filter-results-grid">
                     <!-- Results will be injected here -->
                 </div>
                 
-                <div id="filter-pagination" class="pagination-container">
-                    <!-- Pagination injected here -->
-                </div>
+                <div id="filter-sentinel" style="height: 50px; width: 100%;"></div>
             </div>
         `;
-
         appContent.innerHTML = html;
         
         // Close dropdowns when clicking outside
@@ -928,8 +929,11 @@ const UI = {
             }
         });
 
+        // Initialize intersection observer for infinite scroll
+        UI.setupFilterInfiniteScroll();
+
         // Initial load
-        UI.applyFilters();
+        UI.triggerFilterSearch();
     },
 
     toggleDropdown: (id) => {
@@ -959,70 +963,89 @@ const UI = {
         }
     },
 
-    debounceFilterSearch: (val) => {
-        clearTimeout(window.filterSearchTimeout);
-        window.filterSearchTimeout = setTimeout(() => {
-            window.filterState.query = val;
-            window.filterState.page = 1;
-            UI.applyFilters();
-        }, 500);
+    updateFilterSearch: (val) => {
+        window.filterState.query = val;
     },
 
-    applyFilters: async () => {
+    triggerFilterSearch: () => {
+        window.filterState.page = 1;
+        window.filterIsLoading = false;
+        window.filterHasMore = true;
+        const container = document.getElementById('filter-results-container');
+        if (container) container.innerHTML = '';
+        UI.applyFilters();
+    },
+
+    setupFilterInfiniteScroll: () => {
+        const sentinel = document.getElementById('filter-sentinel');
+        if (!sentinel) return;
+
+        if (window.filterObserver) {
+            window.filterObserver.disconnect();
+        }
+
+        window.filterObserver = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !window.filterIsLoading && window.filterHasMore) {
+                window.filterState.page += 1;
+                UI.applyFilters(true);
+            }
+        }, { rootMargin: '100px' });
+
+        window.filterObserver.observe(sentinel);
+    },
+
+    applyFilters: async (isAppend = false) => {
         const container = document.getElementById('filter-results-container');
         if (!container) return;
         
-        container.innerHTML = `<div class="loader" style="margin: 50px auto;"></div>`;
-        document.getElementById('filter-pagination').innerHTML = ''; // Clear pagination while loading
+        if (window.filterIsLoading || !window.filterHasMore) return;
+        window.filterIsLoading = true;
         
-        // Reset to page 1 if just clicking filter button manually (optional, but good UX for manual clicks)
+        if (!isAppend) {
+            container.innerHTML = `<div class="loader" style="margin: 50px auto; grid-column: 1/-1;"></div>`;
+        } else {
+            // Append a mini loader to the bottom
+            const loaderHtml = `<div class="mini-loader" id="mini-loader" style="margin: 20px auto; grid-column: 1/-1; text-align:center;"><i class="fas fa-spinner fa-spin" style="color:#ff3c5b; font-size:2rem;"></i></div>`;
+            container.insertAdjacentHTML('beforeend', loaderHtml);
+        }
         
         const data = await API.discoverAdvanced(window.filterState, window.filterState.page);
         
+        if (!isAppend) {
+            container.innerHTML = '';
+        } else {
+            const miniLoader = document.getElementById('mini-loader');
+            if (miniLoader) miniLoader.remove();
+        }
+        
         if (!data || !data.results || data.results.length === 0) {
-            container.innerHTML = `<h3 style="text-align:center; padding: 50px; grid-column: 1 / -1; color: #aaa;">No results found. Try adjusting your filters.</h3>`;
+            if (!isAppend) {
+                container.innerHTML = `<h3 style="text-align:center; padding: 50px; grid-column: 1 / -1; color: #aaa;">No results found. Try adjusting your filters.</h3>`;
+            }
+            window.filterHasMore = false;
+            window.filterIsLoading = false;
             return;
         }
 
-        container.innerHTML = data.results.map(item => UI.createCardHTML(item)).join('');
-        
-        // Render pagination
-        let paginationHtml = '';
-        const totalPages = data.totalPages;
-        const current = window.filterState.page;
-        
-        const createPageBtn = (num, text, active) => 
-            `<button class="page-btn ${active ? 'active' : ''}" onclick="UI.changeFilterPage(${num})">${text || num}</button>`;
-
-        if (totalPages > 1) {
-            if (current > 1) {
-                paginationHtml += createPageBtn(current - 1, '<i class="fas fa-chevron-left"></i>');
-            }
-            
-            let start = Math.max(1, current - 2);
-            let end = Math.min(totalPages, current + 2);
-            
-            for (let i = start; i <= end; i++) {
-                paginationHtml += createPageBtn(i, i, i === current);
-            }
-            
-            if (end < totalPages) {
-                paginationHtml += `<span class="page-dots">...</span>`;
-                paginationHtml += createPageBtn(totalPages, totalPages, false);
-            }
-
-            if (current < totalPages) {
-                paginationHtml += createPageBtn(current + 1, '<i class="fas fa-chevron-right"></i>');
-            }
+        if (window.filterState.page >= data.totalPages) {
+            window.filterHasMore = false;
         }
-        
-        document.getElementById('filter-pagination').innerHTML = paginationHtml;
-    },
 
-    changeFilterPage: (pageNum) => {
-        window.filterState.page = pageNum;
-        UI.applyFilters();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const cardsHtml = data.results.map(item => {
+            // Special compact card for filter grid
+            return `
+                <div class="movie-card-popular" onclick="window.location.hash='#${window.filterState.type}/${item.id}'">
+                    <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                    <div class="movie-card-popular-rating">
+                        <span style="font-weight:400; font-size:0.8rem; margin-right:4px;">${item.year}</span>
+                        <i class="fas fa-star" style="color:#ffc107;"></i> ${item.rating}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.insertAdjacentHTML('beforeend', cardsHtml);
+        window.filterIsLoading = false;
     }
 };
 
