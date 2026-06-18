@@ -42,13 +42,51 @@ const API = {
     },
 
     getPopularMovies: async () => {
-        const data = await API.fetchData('/movie/popular');
-        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+        // Fetch 3 pages to populate the grid with 60 items
+        const [p1, p2, p3] = await Promise.all([
+            API.fetchData('/movie/popular?page=1'),
+            API.fetchData('/movie/popular?page=2'),
+            API.fetchData('/movie/popular?page=3')
+        ]);
+        let results = [];
+        if (p1 && p1.results) results = results.concat(p1.results);
+        if (p2 && p2.results) results = results.concat(p2.results);
+        if (p3 && p3.results) results = results.concat(p3.results);
+        return results.map(item => API.formatMedia(item, 'movie'));
     },
 
     getPopularSeries: async () => {
-        const data = await API.fetchData('/tv/popular');
+        // Fetch 3 pages to populate the grid with 60 items
+        const [p1, p2, p3] = await Promise.all([
+            API.fetchData('/tv/popular?page=1'),
+            API.fetchData('/tv/popular?page=2'),
+            API.fetchData('/tv/popular?page=3')
+        ]);
+        let results = [];
+        if (p1 && p1.results) results = results.concat(p1.results);
+        if (p2 && p2.results) results = results.concat(p2.results);
+        if (p3 && p3.results) results = results.concat(p3.results);
+        return results.map(item => API.formatMedia(item, 'tv'));
+    },
+
+    getAnime: async () => {
+        const data = await API.fetchData('/discover/tv?with_genres=16');
         return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getActionMovies: async () => {
+        const data = await API.fetchData('/discover/movie?with_genres=28');
+        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+    },
+
+    getComedyMovies: async () => {
+        const data = await API.fetchData('/discover/movie?with_genres=35');
+        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+    },
+
+    getSciFiMovies: async () => {
+        const data = await API.fetchData('/discover/movie?with_genres=878');
+        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
     getDetails: async (id, type = 'movie') => {

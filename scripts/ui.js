@@ -15,10 +15,14 @@ const UI = {
         const appContent = document.getElementById('app-content');
         
         // Fetch data concurrently
-        const [trending, popularMovies, popularSeries] = await Promise.all([
+        const [trending, popularMovies, popularSeries, anime, action, comedy, scifi] = await Promise.all([
             API.getTrending(),
             API.getPopularMovies(),
-            API.getPopularSeries()
+            API.getPopularSeries(),
+            API.getAnime(),
+            API.getActionMovies(),
+            API.getComedyMovies(),
+            API.getSciFiMovies()
         ]);
 
         if (!trending || trending.length === 0) {
@@ -56,8 +60,12 @@ const UI = {
         `;
 
         html += UI.buildCarousel('Trending Now', trending.slice(1)); // Skip first since it's hero
-        html += UI.buildCarousel('Popular Movies', popularMovies);
-        html += UI.buildCarousel('Popular TV Shows', popularSeries);
+        html += UI.buildCarousel('Popular Movies', popularMovies.slice(0, 20));
+        html += UI.buildCarousel('Popular TV Shows', popularSeries.slice(0, 20));
+        html += UI.buildCarousel('Action', action);
+        html += UI.buildCarousel('Comedy', comedy);
+        html += UI.buildCarousel('Sci-Fi', scifi);
+        html += UI.buildCarousel('Anime', anime);
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
