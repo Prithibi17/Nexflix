@@ -1082,6 +1082,8 @@ const UI = {
         // Trigger initial type setup to inject genres and specific filters, passing true to preserve any incoming state
         await UI.setupTypeSpecificFilters(initialType, true);        
         
+        UI.syncDOMWithFilterState();
+        
         // Initial UI update for headers and chips
         UI.updateFilterUI();
 
@@ -1203,7 +1205,27 @@ const UI = {
         }
         
         // Since we injected new HTML, we should update UI state
+        UI.syncDOMWithFilterState();
         UI.updateFilterUI();
+    },
+
+    syncDOMWithFilterState: () => {
+        if (!window.filterState) return;
+        
+        document.querySelectorAll('.filter-dashboard-container input').forEach(input => {
+            const key = input.name;
+            const val = input.value;
+            
+            if (input.type === 'radio') {
+                input.checked = (String(window.filterState[key]) === String(val));
+            } else if (input.type === 'checkbox') {
+                if (Array.isArray(window.filterState[key])) {
+                    input.checked = window.filterState[key].some(v => String(v) === String(val));
+                } else {
+                    input.checked = false;
+                }
+            }
+        });
     },
 
     updateFilterUI: () => {
