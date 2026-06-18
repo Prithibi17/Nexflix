@@ -8,7 +8,8 @@ const API = {
     // Helper to fetch and parse JSON
     fetchData: async (endpoint) => {
         try {
-            const response = await fetch(`${BASE_URL}${endpoint}${endpoint.includes('?') ? '&' : '?'}api_key=${TMDB_KEY}`);
+            const separator = endpoint.includes('?') ? '&' : '?';
+            const response = await fetch(`${BASE_URL}${endpoint}${separator}api_key=${TMDB_KEY}`);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {
@@ -36,56 +37,38 @@ const API = {
         };
     },
 
-    getTrending: async () => {
-        const data = await API.fetchData('/trending/all/day');
+    getTrending: async (page = 1) => {
+        const data = await API.fetchData(`/trending/all/day?page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, item.media_type)).filter(item => item.title) : [];
     },
 
-    getPopularMovies: async () => {
-        // Fetch 3 pages to populate the grid with 60 items
-        const [p1, p2, p3] = await Promise.all([
-            API.fetchData('/movie/popular?page=1'),
-            API.fetchData('/movie/popular?page=2'),
-            API.fetchData('/movie/popular?page=3')
-        ]);
-        let results = [];
-        if (p1 && p1.results) results = results.concat(p1.results);
-        if (p2 && p2.results) results = results.concat(p2.results);
-        if (p3 && p3.results) results = results.concat(p3.results);
-        return results.map(item => API.formatMedia(item, 'movie'));
+    getPopularMovies: async (page = 1) => {
+        const data = await API.fetchData(`/movie/popular?page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
-    getPopularSeries: async () => {
-        // Fetch 3 pages to populate the grid with 60 items
-        const [p1, p2, p3] = await Promise.all([
-            API.fetchData('/tv/popular?page=1'),
-            API.fetchData('/tv/popular?page=2'),
-            API.fetchData('/tv/popular?page=3')
-        ]);
-        let results = [];
-        if (p1 && p1.results) results = results.concat(p1.results);
-        if (p2 && p2.results) results = results.concat(p2.results);
-        if (p3 && p3.results) results = results.concat(p3.results);
-        return results.map(item => API.formatMedia(item, 'tv'));
-    },
-
-    getAnime: async () => {
-        const data = await API.fetchData('/discover/tv?with_genres=16');
+    getPopularSeries: async (page = 1) => {
+        const data = await API.fetchData(`/tv/popular?page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
-    getActionMovies: async () => {
-        const data = await API.fetchData('/discover/movie?with_genres=28');
+    getAnime: async (page = 1) => {
+        const data = await API.fetchData(`/discover/tv?with_genres=16&page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getActionMovies: async (page = 1) => {
+        const data = await API.fetchData(`/discover/movie?with_genres=28&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
-    getComedyMovies: async () => {
-        const data = await API.fetchData('/discover/movie?with_genres=35');
+    getComedyMovies: async (page = 1) => {
+        const data = await API.fetchData(`/discover/movie?with_genres=35&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
-    getSciFiMovies: async () => {
-        const data = await API.fetchData('/discover/movie?with_genres=878');
+    getSciFiMovies: async (page = 1) => {
+        const data = await API.fetchData(`/discover/movie?with_genres=878&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
@@ -124,9 +107,9 @@ const API = {
         return media;
     },
 
-    search: async (query) => {
+    search: async (query, page = 1) => {
         if (!query) return [];
-        const data = await API.fetchData(`/search/multi?query=${encodeURIComponent(query)}`);
+        const data = await API.fetchData(`/search/multi?query=${encodeURIComponent(query)}&page=${page}`);
         return data ? data.results.filter(item => item.media_type !== 'person').map(item => API.formatMedia(item, item.media_type)) : [];
     }
 };

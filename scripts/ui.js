@@ -60,8 +60,8 @@ const UI = {
         `;
 
         html += UI.buildCarousel('Trending Now', trending.slice(1)); // Skip first since it's hero
-        html += UI.buildCarousel('Popular Movies', popularMovies.slice(0, 20));
-        html += UI.buildCarousel('Popular TV Shows', popularSeries.slice(0, 20));
+        html += UI.buildCarousel('Popular Movies', popularMovies);
+        html += UI.buildCarousel('Popular TV Shows', popularSeries);
         html += UI.buildCarousel('Action', action);
         html += UI.buildCarousel('Comedy', comedy);
         html += UI.buildCarousel('Sci-Fi', scifi);
@@ -74,7 +74,22 @@ const UI = {
     buildCarousel: (title, items) => {
         if (!items || items.length === 0) return '';
         
-        let cards = items.map(item => `
+        let cards = items.map(item => UI.createCardHTML(item)).join('');
+
+        return `
+            <section class="content-row">
+                <div class="row-header">
+                    <h3 class="row-title">${title}</h3>
+                </div>
+                <div class="carousel">
+                    ${cards}
+                </div>
+            </section>
+        `;
+    },
+
+    createCardHTML: (item) => {
+        return `
             <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
                 <div class="card-image-wrapper">
                     <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
@@ -87,18 +102,6 @@ const UI = {
                     </div>
                 </div>
             </div>
-        `).join('');
-
-        return `
-            <section class="content-row">
-                <div class="row-header">
-                    <h3 class="row-title">${title}</h3>
-                    <a href="#" class="view-all">View All</a>
-                </div>
-                <div class="carousel">
-                    ${cards}
-                </div>
-            </section>
         `;
     },
 
@@ -159,37 +162,41 @@ const UI = {
         UI.showLoading();
         const appContent = document.getElementById('app-content');
         
-        const items = await fetchFunction();
+        // The fetchFunction is executed via App router passing page 1
+        const items = await fetchFunction(1);
         
         if (!items || items.length === 0) {
             appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">No items found.</h2>`;
             return;
         }
         
-        let cards = items.map(item => `
-            <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
-                <div class="card-image-wrapper">
-                    <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
-                </div>
-                <div class="card-overlay">
-                    <h4 class="card-title">${item.title}</h4>
-                    <div class="card-meta">
-                        <span>${item.year}</span>
-                        <span><i class="fas fa-star rating"></i> ${item.rating}</span>
-                    </div>
-                </div>
-            </div>
-        `).join('');
+        let cards = items.map(item => UI.createCardHTML(item)).join('');
         
         appContent.innerHTML = `
             <div class="section-padding" style="padding-top: 100px;">
                 <h2 style="margin-bottom: var(--spacing-lg);">${title}</h2>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-md);">
+                <div id="grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-md);">
                     ${cards}
+                </div>
+                <div id="grid-loader" style="display: none; padding: 40px; text-align: center;">
+                    <div class="loader"></div>
                 </div>
             </div>
         `;
         window.scrollTo(0, 0);
+    },
+
+    appendGridItems: (items) => {
+        const gridContainer = document.getElementById('grid-container');
+        if (!gridContainer || !items) return;
+        
+        const html = items.map(item => UI.createCardHTML(item)).join('');
+        gridContainer.insertAdjacentHTML('beforeend', html);
+    },
+
+    toggleGridLoader: (show) => {
+        const loader = document.getElementById('grid-loader');
+        if (loader) loader.style.display = show ? 'block' : 'none';
     },
 
     renderSearchResults: (items) => {
