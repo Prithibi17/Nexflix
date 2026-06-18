@@ -478,7 +478,7 @@ const UI = {
             <section class="dashboard-layout">
                 <div class="dashboard-main">
                     <h3 style="color: var(--accent-color); margin-bottom: 1rem;">Recently Updated</h3>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--spacing-md); margin-bottom: 3rem;">
+                    <div class="flush-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0; margin-bottom: 3rem;">
                         ${recent.slice(5, 17).map(item => UI.createCardHTML(item)).join('')}
                     </div>
                     
@@ -492,7 +492,7 @@ const UI = {
                         <button class="btn btn-secondary">Fri</button>
                         <button class="btn btn-secondary">Sat</button>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--spacing-md);">
+                    <div class="flush-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0;">
                         ${trending.slice(15, 20).map(item => UI.createCardHTML(item)).join('')}
                     </div>
                 </div>

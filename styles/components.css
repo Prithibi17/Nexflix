@@ -642,6 +642,11 @@
     text-align: right;
 }
 
+/* Flush Grid (No gap, no border radius) */
+.flush-grid .media-card {
+    border-radius: 0;
+}
+
 @media (max-width: 1200px) {
     .four-columns {
         grid-template-columns: repeat(2, 1fr);
