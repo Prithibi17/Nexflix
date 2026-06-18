@@ -1386,3 +1386,63 @@
     height: 100%;
     background: #ff0000;
 }
+
+/* New Releases Cards */
+.movie-card-newrelease {
+    position: relative;
+    min-width: 160px;
+    width: 160px;
+    aspect-ratio: 2/3;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.movie-card-newrelease:hover {
+    transform: scale(1.05);
+}
+
+.movie-card-newrelease img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.movie-card-new-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: #ff0000;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    z-index: 2;
+}
+
+.movie-card-newrelease-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px 10px 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    z-index: 1;
+}
+
+.movie-card-newrelease-overlay h4 {
+    color: #fff;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+}
+
+.movie-card-newrelease-overlay p {
+    color: #aaa;
+    font-size: 0.75rem;
+}

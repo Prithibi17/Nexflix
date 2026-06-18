@@ -97,6 +97,21 @@ const API = {
         return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
+    getTopRatedSeries: async (page = 1) => {
+        const data = await API.fetchData(`/tv/top_rated?page=${page}`);
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getNewSeries: async (page = 1) => {
+        const data = await API.fetchData(`/tv/on_the_air?page=${page}`);
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getNewMovies: async (page = 1) => {
+        const data = await API.fetchData(`/movie/now_playing?page=${page}`);
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+    },
+
     getComedyMovies: async (page = 1) => {
         const data = await API.fetchData(`/discover/movie?with_genres=35&page=${page}`);
         return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];

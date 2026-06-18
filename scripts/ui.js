@@ -627,49 +627,49 @@ const UI = {
         window.scrollTo(0, 0);
     },
 
-    // --- Movies Dashboard Methods ---
-    renderMoviesDashboard: async () => {
+    // --- Media Dashboard Methods (Movies & Series) ---
+    renderMediaDashboard: async (mediaType = 'movie') => {
         const appContent = document.getElementById('app-content');
         appContent.innerHTML = `<div class="loader" style="margin: 100px auto;"></div>`;
 
         try {
-            const [popular, topRated] = await Promise.all([
-                API.getPopularMovies(1),
-                API.getTopRatedMovies(1)
+            const [popular, topRated, newReleasesData] = await Promise.all([
+                mediaType === 'movie' ? API.getPopularMovies(1) : API.getPopularSeries(1),
+                mediaType === 'movie' ? API.getTopRatedMovies(1) : API.getTopRatedSeries(1),
+                mediaType === 'movie' ? API.getNewMovies(1) : API.getNewSeries(1)
             ]);
 
-            // Mock "Continue Watching" using a subset of popular movies
+            // Mock "Continue Watching" using a subset of popular media
             const continueWatching = popular.slice(10, 14);
 
             // Hero Carousel Data
-            const heroMovies = popular.slice(0, 5);
-            window.moviesHeroData = heroMovies;
+            const heroMedia = popular.slice(0, 5);
+            window.moviesHeroData = heroMedia;
             window.currentMoviesHeroIndex = 0;
 
             const buildHeroHtml = () => {
                 return `
                     <div class="movies-hero-carousel">
                         <div class="movies-hero-slides-container" id="movies-hero-slides-container">
-                            ${heroMovies.map((movie, index) => {
-                                // For hero, try to use high-res image
-                                const bgImg = movie.poster.replace('w500', 'original');
+                            ${heroMedia.map((item, index) => {
+                                const bgImg = item.poster.replace('w500', 'original');
                                 return `
                                 <div class="movies-hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}" style="background-image: url('${bgImg}');">
                                     <div class="movies-hero-gradient"></div>
                                     <div class="movies-hero-content">
                                         <div class="movies-hero-tag"><i class="fas fa-fire"></i> #${index + 1} Trending</div>
-                                        <h1 class="movies-hero-title">${movie.title}</h1>
+                                        <h1 class="movies-hero-title">${item.title}</h1>
                                         <div class="movies-hero-meta">
-                                            <span>${movie.year}</span>
-                                            <span><i class="fas fa-star" style="color:#ffc107;"></i> ${movie.rating}</span>
+                                            <span>${item.year}</span>
+                                            <span><i class="fas fa-star" style="color:#ffc107;"></i> ${item.rating}</span>
                                             <span>${Math.floor(Math.random() * 2 + 1)}h ${Math.floor(Math.random() * 59)}m</span>
-                                            <span>Action, Fantasy, Adventure</span>
+                                            <span>Action, Drama, Fantasy</span>
                                             <span class="movies-hero-age">UA 16+</span>
                                         </div>
-                                        <p class="movies-hero-desc">${movie.description.substring(0, 200)}...</p>
+                                        <p class="movies-hero-desc">${(item.description || '').substring(0, 200)}...</p>
                                         <div class="movies-hero-buttons">
-                                            <button class="btn-play-now" onclick="window.location.hash='#movie/${movie.id}'"><i class="fas fa-play"></i> Play Now</button>
-                                            <button class="btn-more-info" onclick="window.location.hash='#movie/${movie.id}'"><i class="fas fa-info-circle"></i> More Info</button>
+                                            <button class="btn-play-now" onclick="window.location.hash='#${mediaType}/${item.id}'"><i class="fas fa-play"></i> Play Now</button>
+                                            <button class="btn-more-info" onclick="window.location.hash='#${mediaType}/${item.id}'"><i class="fas fa-info-circle"></i> More Info</button>
                                         </div>
                                     </div>
                                 </div>
@@ -678,7 +678,7 @@ const UI = {
                         <div class="movies-hero-nav movies-hero-nav-left" onclick="UI.prevMoviesHero()"><i class="fas fa-chevron-left"></i></div>
                         <div class="movies-hero-nav movies-hero-nav-right" onclick="UI.nextMoviesHero()"><i class="fas fa-chevron-right"></i></div>
                         <div class="movies-hero-dots" id="movies-hero-dots">
-                            ${heroMovies.map((_, index) => `
+                            ${heroMedia.map((_, index) => `
                                 <div class="movies-hero-dot ${index === 0 ? 'active' : ''}" onclick="UI.setMoviesHero(${index})"></div>
                             `).join('')}
                         </div>
@@ -690,14 +690,14 @@ const UI = {
                 let cardsHtml = items.map(item => {
                     if (type === 'popular') {
                         return `
-                            <div class="movie-card-popular" onclick="window.location.hash='#movie/${item.id}'">
+                            <div class="movie-card-popular" onclick="window.location.hash='#${mediaType}/${item.id}'">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-popular-rating"><i class="fas fa-star" style="color:#ffc107;"></i> ${item.rating}</div>
                             </div>
                         `;
                     } else if (type === 'toprated') {
                         return `
-                            <div class="movie-card-toprated" onclick="window.location.hash='#movie/${item.id}'">
+                            <div class="movie-card-toprated" onclick="window.location.hash='#${mediaType}/${item.id}'">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-toprated-badge">${item.rating}</div>
                                 <div class="movie-card-toprated-overlay">
@@ -706,19 +706,30 @@ const UI = {
                             </div>
                         `;
                     } else if (type === 'continue') {
-                        // Wide thumbnail mock using poster but zoomed/cropped via css
+                        const subtext = mediaType === 'tv' ? `S1 E${Math.floor(Math.random() * 8) + 1} • ${Math.floor(Math.random() * 50) + 10}m left` : `${Math.floor(Math.random() * 50) + 10}m left`;
                         return `
-                            <div class="movie-card-continue" onclick="window.location.hash='#movie/${item.id}'">
+                            <div class="movie-card-continue" onclick="window.location.hash='#${mediaType}/${item.id}'">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-continue-overlay">
                                     <div class="continue-info">
                                         <h4>${item.title}</h4>
-                                        <p>${Math.floor(Math.random() * 50) + 10}m left</p>
+                                        <p>${subtext}</p>
                                     </div>
                                     <div class="continue-play-icon"><i class="fas fa-play"></i></div>
                                 </div>
                                 <div class="continue-progress-bar">
                                     <div class="continue-progress-fill" style="width: ${Math.floor(Math.random() * 80) + 10}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    } else if (type === 'newrelease') {
+                        return `
+                            <div class="movie-card-newrelease" onclick="window.location.hash='#${mediaType}/${item.id}'">
+                                <div class="movie-card-new-badge">NEW</div>
+                                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                                <div class="movie-card-newrelease-overlay">
+                                    <h4>${item.title}</h4>
+                                    <p>${item.year}</p>
                                 </div>
                             </div>
                         `;
@@ -738,13 +749,16 @@ const UI = {
                 `;
             };
 
+            const typeLabel = mediaType === 'movie' ? 'Movies' : 'TV Shows';
+
             let html = `
                 <div class="movies-dashboard">
                     ${buildHeroHtml()}
                     <div class="movies-dashboard-content">
-                        ${buildHorizontalRow('Popular Movies', popular.slice(0, 10), 'popular')}
+                        ${buildHorizontalRow(`Popular ${typeLabel}`, popular.slice(0, 10), 'popular')}
                         ${buildHorizontalRow('Top Rated', topRated.slice(0, 10), 'toprated')}
                         ${buildHorizontalRow('Continue Watching', continueWatching, 'continue')}
+                        ${buildHorizontalRow('New Releases', newReleasesData.slice(0, 10), 'newrelease')}
                     </div>
                 </div>
             `;

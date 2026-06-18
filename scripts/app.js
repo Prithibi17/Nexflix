@@ -55,11 +55,10 @@ const App = {
                 await UI.renderHome();
             } 
             else if (hash === 'movies') {
-                await UI.renderMoviesDashboard();
+                await UI.renderMediaDashboard('movie');
             }
             else if (hash === 'series') {
-                App.state.activeGridFetcher = API.getPopularSeries;
-                await UI.renderGrid('Popular TV Shows', App.state.activeGridFetcher);
+                await UI.renderMediaDashboard('tv');
             }
             else if (hash === 'categories' || hash === 'trending') {
                 App.state.activeGridFetcher = API.getTrending;
