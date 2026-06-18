@@ -472,23 +472,9 @@ const UI = {
 
         let html = `<div class="anime-container">`;
 
-        // Top Row: Hero + Most Viewed
-        html += `
-            <div class="anime-top-row">
-                ${heroHtml}
-                <div class="anime-most-viewed">
-                    <h3 style="margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; justify-content: space-between;">
-                        <span><i class="fas fa-chart-line" style="color: #ff3c5b;"></i> Most Viewed</span>
-                        <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
-                    </h3>
-                    ${UI.buildMostViewedList(popular)}
-                </div>
-            </div>
-        `;
-
-        // Trending Carousel
-        html += `
-            <div style="margin-bottom: 2rem;">
+        // Trending Carousel HTML snippet
+        const trendingCarouselHtml = `
+            <div style="margin-bottom: 0;">
                 <h3 style="margin-bottom: 15px; color: #fff; font-size: 1.2rem; display: flex; justify-content: space-between;">
                     <span>🔥 Trending Now</span>
                     <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All <i class="fas fa-chevron-right"></i></span>
@@ -511,6 +497,23 @@ const UI = {
                             </div>
                         `;
                     }).join('')}
+                </div>
+            </div>
+        `;
+
+        // Top Row: (Hero + Trending) on left, Most Viewed on right
+        html += `
+            <div class="anime-top-row">
+                <div style="flex: 3; display: flex; flex-direction: column; gap: var(--spacing-xl); overflow: hidden;">
+                    ${heroHtml}
+                    ${trendingCarouselHtml}
+                </div>
+                <div class="anime-most-viewed">
+                    <h3 style="margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-chart-line" style="color: #ff3c5b;"></i> Most Viewed</span>
+                        <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
+                    </h3>
+                    ${UI.buildMostViewedList(popular)}
                 </div>
             </div>
         `;
