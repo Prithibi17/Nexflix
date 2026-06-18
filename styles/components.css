@@ -225,6 +225,7 @@
     padding: 100px var(--spacing-xl) 0;
     opacity: 0;
     transition: opacity var(--transition-normal);
+    overflow-y: auto;
 }
 
 .search-overlay.active {
@@ -237,6 +238,7 @@
     max-width: 1000px;
     margin: 0 auto;
     position: relative;
+    padding-bottom: 100px;
 }
 
 .close-search {
@@ -354,6 +356,47 @@
 .detail-cast span {
     color: var(--text-secondary);
 }
+
+/* Episode / Collection Card */
+.episode-card {
+    flex: 0 0 250px;
+    min-width: 250px;
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+    background-color: var(--bg-tertiary);
+    transition: transform var(--transition-normal);
+}
+
+.episode-card:hover {
+    transform: scale(1.05);
+}
+
+.episode-image-wrapper {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    position: relative;
+}
+
+.episode-info {
+    padding: var(--spacing-sm);
+}
+
+.episode-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-xs);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.episode-runtime {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
 
 /* Player Container */
 .player-container {

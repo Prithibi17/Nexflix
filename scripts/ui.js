@@ -153,12 +153,54 @@ const UI = {
             <div style="padding-top: 4rem;"></div>
         `;
         
+        let extraHtml = '';
+        if (type === 'tv' && media.seasons && media.seasons.length > 0) {
+            // Find season 1 or the first valid season
+            const season = media.seasons.find(s => s.season_number > 0) || media.seasons[0];
+            const episodes = await API.getEpisodes(id, season.season_number);
+            if (episodes && episodes.length > 0) {
+                extraHtml = UI.buildEpisodeCarousel(`Season ${season.season_number} Episodes`, episodes, id);
+            }
+        } else if (type === 'movie' && media.belongs_to_collection) {
+            const collectionParts = await API.getCollection(media.belongs_to_collection.id);
+            if (collectionParts && collectionParts.length > 0) {
+                extraHtml = UI.buildCarousel('The Collection', collectionParts);
+            }
+        }
+
         // Add recommendations (just use trending for now to simulate)
         const trending = await API.getTrending();
-        html += UI.buildCarousel('More Like This', trending);
+        html += extraHtml + UI.buildCarousel('More Like This', trending);
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
+    },
+
+    buildEpisodeCarousel: (title, episodes, tvId) => {
+        if (!episodes || episodes.length === 0) return '';
+        
+        let cards = episodes.map(ep => `
+            <div class="episode-card" onclick="Player.play(${tvId}, 'tv', 1, ${ep.episode_number})">
+                <div class="episode-image-wrapper">
+                    <img src="${ep.still}" alt="${ep.title}" class="card-img" loading="lazy">
+                </div>
+                <div class="episode-info">
+                    <h5 class="episode-title">${ep.episode_number}. ${ep.title}</h5>
+                    <span class="episode-runtime">${ep.runtime}</span>
+                </div>
+            </div>
+        `).join('');
+
+        return `
+            <section class="content-row">
+                <div class="row-header">
+                    <h3 class="row-title">${title}</h3>
+                </div>
+                <div class="carousel">
+                    ${cards}
+                </div>
+            </section>
+        `;
     },
     
     renderGrid: async (title, fetchFunction) => {

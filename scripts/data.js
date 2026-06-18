@@ -78,6 +78,9 @@ const API = {
 
         const media = API.formatMedia(data, type);
         
+        media.seasons = data.seasons;
+        media.belongs_to_collection = data.belongs_to_collection;
+        
         // Extract genres
         media.genres = data.genres ? data.genres.map(g => g.name) : ["Unknown"];
         
@@ -111,5 +114,23 @@ const API = {
         if (!query) return [];
         const data = await API.fetchData(`/search/multi?query=${encodeURIComponent(query)}&page=${page}`);
         return data ? data.results.filter(item => item.media_type !== 'person').map(item => API.formatMedia(item, item.media_type)) : [];
+    },
+
+    getCollection: async (collectionId) => {
+        const data = await API.fetchData(`/collection/${collectionId}`);
+        return data && data.parts ? data.parts.map(item => API.formatMedia(item, 'movie')) : [];
+    },
+
+    getEpisodes: async (tvId, seasonNum = 1) => {
+        const data = await API.fetchData(`/tv/${tvId}/season/${seasonNum}`);
+        if (!data || !data.episodes) return [];
+        return data.episodes.map(ep => ({
+            id: ep.id,
+            episode_number: ep.episode_number,
+            title: ep.name,
+            overview: ep.overview,
+            still: ep.still_path ? `${IMG_BASE_URL}w500${ep.still_path}` : 'https://via.placeholder.com/500x281?text=No+Image',
+            runtime: ep.runtime ? `${ep.runtime}m` : ''
+        }));
     }
 };
