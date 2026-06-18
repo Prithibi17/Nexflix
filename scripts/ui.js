@@ -530,6 +530,7 @@ const UI = {
             API.getAnimeTopRated(),
             API.getAnimeCompleted()
         ]);
+        window.animeTrendingData = trending;
 
         if (!trending || trending.length === 0) {
             appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">Failed to load Anime data.</h2>`;
@@ -662,10 +663,10 @@ const UI = {
                 <div class="dashboard-main">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-star" style="color:#ffc107;"></i> Recently Updated</h3>
-                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;">View All</span>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'tv', genres: [16], year: 'All', sort: 'primary_release_date.desc' }; window.location.hash='#filter';">View All</span>
                     </div>
                     <div class="dashboard-grid" style="margin-bottom: 3rem;">
-                        ${recent.slice(5, 11).map(item => `
+                        ${recent.slice(0, 15).map(item => `
                             <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'" style="min-width:0; width:100%;">
                                 <div class="card-image-wrapper">
                                     <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
@@ -680,30 +681,15 @@ const UI = {
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-calendar-alt" style="color:var(--accent-primary);"></i> Estimated Schedule</h3>
-                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;">View Full Schedule</span>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'tv', genres: [16], year: 'All', sort: 'popularity.desc' }; window.location.hash='#filter';">View Full Schedule</span>
                     </div>
-                    <div class="schedule-header">
-                        <button class="schedule-btn active">Sun</button>
-                        <button class="schedule-btn">Mon</button>
-                        <button class="schedule-btn">Tue</button>
-                        <button class="schedule-btn">Wed</button>
-                        <button class="schedule-btn">Thu</button>
-                        <button class="schedule-btn">Fri</button>
-                        <button class="schedule-btn">Sat</button>
+                    <div class="schedule-header" id="anime-schedule-header">
+                        ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `
+                            <button class="schedule-btn ${day === 'Sun' ? 'active' : ''}" onclick="UI.changeScheduleDay('${day}')">${day}</button>
+                        `).join('')}
                     </div>
-                    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
-                        ${trending.slice(15, 20).map((item, idx) => {
-                            const times = ["08:00 AM", "09:30 AM", "11:00 AM", "01:30 PM", "03:00 PM", "05:00 PM"];
-                            return `
-                            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer;" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
-                                <img src="${item.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:4px;" loading="lazy">
-                                <div style="overflow:hidden;">
-                                    <div style="font-size:0.75rem; color:#aaa; margin-bottom:2px;">${times[idx % times.length]}</div>
-                                    <div style="font-size:0.85rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
-                                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">EP ${Math.floor(Math.random()*20)+1} <span style="background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:2px; margin-left:4px;">Upcoming</span></div>
-                                </div>
-                            </div>
-                        `;}).join('')}
+                    <div class="dashboard-grid" id="anime-schedule-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                        ${UI.buildScheduleGridHtml(trending, 'Sun')}
                     </div>
                 </div>
             </section>
@@ -713,6 +699,44 @@ const UI = {
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
+    },
+
+    changeScheduleDay: (day) => {
+        const header = document.getElementById('anime-schedule-header');
+        if (header) {
+            header.querySelectorAll('.schedule-btn').forEach(btn => {
+                if (btn.innerText === day) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        const grid = document.getElementById('anime-schedule-grid');
+        if (grid && window.animeTrendingData) {
+            grid.innerHTML = UI.buildScheduleGridHtml(window.animeTrendingData, day);
+        }
+    },
+
+    buildScheduleGridHtml: (data, day) => {
+        if (!data || data.length === 0) return '';
+        
+        // Pseudo-randomize selection based on day string
+        const hash = day.charCodeAt(0) + day.charCodeAt(1) + day.charCodeAt(2);
+        const startIndex = hash % Math.max(1, data.length - 6);
+        const chunk = data.slice(startIndex, startIndex + 6);
+        
+        const times = ["08:00 AM", "09:30 AM", "11:00 AM", "01:30 PM", "03:00 PM", "05:00 PM"];
+        return chunk.map((item, idx) => `
+            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer;" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                <img src="${item.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:4px;" loading="lazy">
+                <div style="overflow:hidden;">
+                    <div style="font-size:0.75rem; color:#aaa; margin-bottom:2px;">${times[idx % times.length]}</div>
+                    <div style="font-size:0.85rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">EP ${Math.floor(Math.random()*20)+1} <span style="background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:2px; margin-left:4px;">Upcoming</span></div>
+                </div>
+            </div>
+        `).join('');
     },
 
     // --- Media Dashboard Methods (Movies & Series) ---
