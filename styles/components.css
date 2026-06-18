@@ -503,6 +503,7 @@
     background-color: #0b0c10;
     color: #e5e5e5;
     padding: var(--spacing-xl);
+    padding-top: 100px;
     max-width: 1440px;
     margin: 0 auto;
 }
@@ -519,7 +520,7 @@
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    min-height: 450px;
+    min-height: 350px;
     display: flex;
     align-items: flex-end;
     padding: var(--spacing-xl);
