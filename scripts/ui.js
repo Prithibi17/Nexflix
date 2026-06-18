@@ -663,7 +663,7 @@ const UI = {
                 <div class="dashboard-main">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-star" style="color:#ffc107;"></i> Recently Updated</h3>
-                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'tv', genres: [16], year: 'All', sort: 'primary_release_date.desc' }; window.location.hash='#filter';">View All</span>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'primary_release_date.desc', rating: 0 }; window.location.hash='#filter';">View All</span>
                     </div>
                     <div class="dashboard-grid" style="margin-bottom: 3rem;">
                         ${recent.slice(0, 15).map(item => `
@@ -681,7 +681,7 @@ const UI = {
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-calendar-alt" style="color:var(--accent-primary);"></i> Estimated Schedule</h3>
-                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'tv', genres: [16], year: 'All', sort: 'popularity.desc' }; window.location.hash='#filter';">View Full Schedule</span>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'popularity.desc', rating: 0 }; window.location.hash='#filter';">View Full Schedule</span>
                     </div>
                     <div class="schedule-header" id="anime-schedule-header">
                         ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `
@@ -1077,11 +1077,12 @@ const UI = {
         `;
         appContent.innerHTML = html;
         
-        // Trigger initial type setup to inject genres and specific filters
-        await UI.setupTypeSpecificFilters(window.filterState.type || 'movie');        
+        const initialType = window.filterState && window.filterState.type ? window.filterState.type : 'movie';
+        
+        // Trigger initial type setup to inject genres and specific filters, passing true to preserve any incoming state
+        await UI.setupTypeSpecificFilters(initialType, true);        
         
         // Initial UI update for headers and chips
-        UI.syncFilterDOMToState();
         UI.updateFilterUI();
 
         // Close dropdowns when clicking outside
@@ -1098,26 +1099,6 @@ const UI = {
         UI.triggerFilterSearch();
     },
 
-    syncFilterDOMToState: () => {
-        if (!window.filterState) return;
-        
-        document.querySelectorAll('.filter-dashboard-container input').forEach(input => {
-            input.checked = false;
-        });
-
-        Object.entries(window.filterState).forEach(([key, val]) => {
-            if (Array.isArray(val)) {
-                val.forEach(v => {
-                    const input = document.querySelector(`.filter-dashboard-container input[name="${key}"][value="${v}"]`);
-                    if (input) input.checked = true;
-                });
-            } else if (val !== '') {
-                const input = document.querySelector(`.filter-dashboard-container input[name="${key}"][value="${val}"]`);
-                if (input) input.checked = true;
-            }
-        });
-    },
-
     toggleDropdown: (id) => {
         const el = document.getElementById(`dropdown-${id}`);
         // Close others
@@ -1127,15 +1108,19 @@ const UI = {
         el.classList.toggle('active');
     },
 
-    setupTypeSpecificFilters: async (type) => {
+    setupTypeSpecificFilters: async (type, preserveState = false) => {
         const container = document.getElementById('type-specific-filters');
         if (!container) return;
         
-        // Reset state for specific filters
-        window.filterState.keywords = [];
-        window.filterState.companies = [];
-        window.filterState.networks = [];
-        window.filterState.genres = []; // Reset genres too
+        if (!preserveState) {
+            // Reset state for specific filters
+            window.filterState.keywords = [];
+            window.filterState.companies = [];
+            window.filterState.networks = [];
+            window.filterState.genres = [];
+            window.filterState.type = type;
+            window.filterState.page = 1;
+        }
         
         let html = '';
         let genreOptions = [];
