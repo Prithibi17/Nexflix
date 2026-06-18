@@ -283,10 +283,10 @@ const UI = {
         return `
             <section class="content-row" id="season-episodes-section">
                 <div class="row-header" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px;">
-                    <select class="season-selector" onchange="UI.handleSeasonDropdownChange(${tvId}, this.value)" style="background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer; max-width: 400px; text-overflow: ellipsis;">
+                    <select class="season-selector" onchange="UI.handleSeasonDropdownChange(${tvId}, this.value)" style="background: #1c202a; color: #fff; border: 1px solid rgba(139, 124, 255,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer; max-width: 400px; text-overflow: ellipsis;">
                         ${optionsHtml}
                     </select>
-                    <select id="episode-range-selector" class="season-selector" style="display: none; background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;" onchange="UI.renderEpisodeChunk(${tvId}, this.value)">
+                    <select id="episode-range-selector" class="season-selector" style="display: none; background: #1c202a; color: #fff; border: 1px solid rgba(139, 124, 255,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;" onchange="UI.renderEpisodeChunk(${tvId}, this.value)">
                     </select>
                 </div>
                 <div class="carousel" id="episodes-container">
@@ -542,7 +542,7 @@ const UI = {
         const heroHtml = `
             <div class="anime-hero-card" style="background-image: url('${hero.backdrop}'); cursor:pointer;" onclick="window.location.hash='#${hero.type}/${hero.id}'">
                 <div class="anime-hero-content">
-                    <div style="color: #ff3c5b; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem;"><i class="fas fa-fire"></i> #1 Trending Now</div>
+                    <div style="color: var(--accent-primary); font-weight: bold; margin-bottom: 10px; font-size: 0.9rem;"><i class="fas fa-fire"></i> #1 Trending Now</div>
                     <h1 style="font-size: 3rem; margin-bottom: 10px; line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${hero.title}</h1>
                     <div style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem; color: #ccc;">
                         <span>${hero.year}</span>
@@ -551,7 +551,7 @@ const UI = {
                     </div>
                     <p style="font-size: 0.95rem; line-height: 1.6; color: #bbb; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${hero.description}</p>
                     <div style="display: flex; gap: 15px;">
-                        <button class="btn btn-primary" style="background: #ff3c5b; border-radius: 25px; padding: 10px 24px;"><i class="fas fa-play"></i> Play Now</button>
+                        <button class="btn btn-primary" style="background: var(--accent-primary); border-radius: 25px; padding: 10px 24px;"><i class="fas fa-play"></i> Play Now</button>
                         <button class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-radius: 25px; padding: 10px 24px;"><i class="fas fa-plus"></i> My List</button>
                     </div>
                 </div>
@@ -598,7 +598,7 @@ const UI = {
                 </div>
                 <div class="anime-most-viewed">
                     <h3 style="margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; justify-content: space-between;">
-                        <span><i class="fas fa-chart-line" style="color: #ff3c5b;"></i> Most Viewed</span>
+                        <span><i class="fas fa-chart-line" style="color: var(--accent-primary);"></i> Most Viewed</span>
                         <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
                     </h3>
                     ${UI.buildMostViewedList(popular)}
@@ -609,8 +609,8 @@ const UI = {
         // Genre Bar
         html += `
             <div class="anime-genre-bar">
-                <button class="genre-tag" style="background: #ff3c5b; color: white;"><i class="fas fa-layer-group"></i> All</button>
-                ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical'].map(g => `<button class="genre-tag"><i class="fas fa-star" style="color:#ff3c5b; font-size:0.6rem;"></i> ${g}</button>`).join('')}
+                <button class="genre-tag" style="background: var(--accent-primary); color: white;"><i class="fas fa-layer-group"></i> All</button>
+                ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical'].map(g => `<button class="genre-tag"><i class="fas fa-star" style="color:var(--accent-primary); font-size:0.6rem;"></i> ${g}</button>`).join('')}
             </div>
         `;
 
@@ -627,7 +627,7 @@ const UI = {
                             <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
                             <div class="compact-info">
                                 <div class="compact-title">${item.title}</div>
-                                <div class="compact-meta">TV • ${item.year} • <i class="fas fa-star" style="color: #ff3c5b;"></i> ${item.rating}</div>
+                                <div class="compact-meta">TV • ${item.year} • <i class="fas fa-star" style="color: var(--accent-primary);"></i> ${item.rating}</div>
                             </div>
                             <div class="ep-badge">EP ${Math.floor(Math.random()*12)+1}</div>
                         </div>
@@ -640,7 +640,7 @@ const UI = {
             <section class="four-columns">
                 ${buildCol('New Added', '<i class="fas fa-comment-dots" style="color:#4caf50;"></i>', recent)}
                 ${buildCol('Most Popular', '<i class="fas fa-star" style="color:#ffc107;"></i>', popular)}
-                ${buildCol('Most Favorite', '<i class="fas fa-fire" style="color:#ff3c5b;"></i>', topRated)}
+                ${buildCol('Most Favorite', '<i class="fas fa-fire" style="color:var(--accent-primary);"></i>', topRated)}
                 ${buildCol('Completed', '<i class="fas fa-check-circle" style="color:#4caf50;"></i>', completed)}
             </section>
         `;
@@ -655,7 +655,7 @@ const UI = {
                             <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
                         </h3>
                         <div class="genre-cloud" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                            ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical', 'Music'].map(g => `<button class="genre-tag" style="width:100%; text-align:left;"><i class="fas fa-circle" style="color:#ff3c5b; font-size:0.4rem; margin-right:5px;"></i> ${g}</button>`).join('')}
+                            ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical', 'Music'].map(g => `<button class="genre-tag" style="width:100%; text-align:left;"><i class="fas fa-circle" style="color:var(--accent-primary); font-size:0.4rem; margin-right:5px;"></i> ${g}</button>`).join('')}
                         </div>
                     </div>
                 </div>
@@ -679,7 +679,7 @@ const UI = {
                     </div>
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                        <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-calendar-alt" style="color:#ff3c5b;"></i> Estimated Schedule</h3>
+                        <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-calendar-alt" style="color:var(--accent-primary);"></i> Estimated Schedule</h3>
                         <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;">View Full Schedule</span>
                     </div>
                     <div class="schedule-header">
@@ -1358,7 +1358,7 @@ const UI = {
             container.innerHTML = `<div class="loader" style="margin: 50px auto; grid-column: 1/-1;"></div>`;
         } else {
             // Append a mini loader to the bottom
-            const loaderHtml = `<div class="mini-loader" id="mini-loader" style="margin: 20px auto; grid-column: 1/-1; text-align:center;"><i class="fas fa-spinner fa-spin" style="color:#ff3c5b; font-size:2rem;"></i></div>`;
+            const loaderHtml = `<div class="mini-loader" id="mini-loader" style="margin: 20px auto; grid-column: 1/-1; text-align:center;"><i class="fas fa-spinner fa-spin" style="color:var(--accent-primary); font-size:2rem;"></i></div>`;
             container.insertAdjacentHTML('beforeend', loaderHtml);
         }
         

@@ -1,23 +1,31 @@
 /* main.css - Variables, Reset, Typography */
 
 :root {
-    /* Color Palette - Deep Dark Premium Theme */
-    --bg-primary: #050505; /* Deep black */
-    --bg-secondary: #111111; /* Charcoal */
-    --bg-tertiary: #1a1a1a;
+    /* Color Palette - Noxflix Premium Theme */
+    --bg-primary: #05070A;
+    --bg-secondary: #0B1020;
+    --bg-tertiary: #111827;
+    --bg-elevated: #161F2E;
     
-    --text-primary: #f0f0f0; /* Soft white */
-    --text-secondary: #a0a0a0; /* Muted gray */
+    --text-primary: #FFFFFF;
+    --text-secondary: #B8C0D4;
+    --text-muted: #7B8499;
     
-    --accent-color: #e50914; /* Netflix-style red accent */
-    --accent-hover: #b80710;
+    --accent-primary: #8B7CFF;
+    --accent-secondary: #6A5CFF;
+    --accent-glow: rgba(139, 124, 255, 0.25);
     
-    --overlay-dark: rgba(0, 0, 0, 0.7);
-    --glass-bg: rgba(17, 17, 17, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    /* Legacy variables for safety, pointing to new accents */
+    --accent-color: #8B7CFF; 
+    --accent-hover: #6A5CFF;
+    
+    --border-color: rgba(255, 255, 255, 0.08);
+    --overlay-dark: rgba(5, 7, 10, 0.85);
+    --glass-bg: rgba(11, 16, 32, 0.5);
+    --glass-border: rgba(255, 255, 255, 0.08);
     
     /* Typography */
-    --font-main: 'Inter', sans-serif;
+    --font-main: 'Inter', system-ui, -apple-system, sans-serif;
     
     /* Spacing */
     --spacing-xs: 0.25rem;
@@ -31,9 +39,9 @@
     --transition-normal: 0.3s ease;
     
     /* Border Radius */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
 }
 
 /* CSS Reset */
@@ -98,14 +106,15 @@ h3 { font-size: 1.5rem; }
 }
 
 .logo {
-    font-size: 1.5rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
+    font-size: 1.8rem;
+    font-weight: 400;
+    letter-spacing: 2px;
     color: var(--text-primary);
 }
 
 .logo span {
-    color: var(--accent-color);
+    color: var(--accent-primary);
+    font-weight: 600;
 }
 
 /* Utilities */
