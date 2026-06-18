@@ -211,10 +211,7 @@ const UI = {
         if (type === 'tv' && media.seasons && media.seasons.length > 0) {
             // Find season 1 or the first valid season
             const season = media.seasons.find(s => s.season_number > 0) || media.seasons[0];
-            const episodes = await API.getEpisodes(id, season.season_number);
-            if (episodes && episodes.length > 0) {
-                extraHtml = UI.buildEpisodeCarousel(`Season ${season.season_number} Episodes`, episodes, id);
-            }
+            extraHtml = UI.buildSeasonSection(media.seasons, season.season_number, id);
         } else if (type === 'movie' && media.belongs_to_collection) {
             const collectionParts = await API.getCollection(media.belongs_to_collection.id);
             if (collectionParts && collectionParts.length > 0) {
@@ -241,12 +238,75 @@ const UI = {
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
+
+        if (type === 'tv' && media.seasons && media.seasons.length > 0) {
+            const season = media.seasons.find(s => s.season_number > 0) || media.seasons[0];
+            UI.loadSeasonEpisodes(id, season.season_number);
+        }
     },
 
-    buildEpisodeCarousel: (title, episodes, tvId) => {
-        if (!episodes || episodes.length === 0) return '';
+    buildSeasonSection: (seasons, currentSeasonNum, tvId) => {
+        if (!seasons || seasons.length === 0) return '';
         
-        let cards = episodes.map(ep => `
+        // Render valid seasons
+        let seasonOptions = seasons.filter(s => s.season_number > 0).map(s => {
+            let name = s.name || `Season ${s.season_number}`;
+            return `<option value="${s.season_number}" ${s.season_number === currentSeasonNum ? 'selected' : ''}>${name}</option>`;
+        }).join('');
+
+        return `
+            <section class="content-row" id="season-episodes-section">
+                <div class="row-header" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px;">
+                    <select class="season-selector" onchange="UI.loadSeasonEpisodes(${tvId}, this.value)" style="background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;">
+                        ${seasonOptions}
+                    </select>
+                    <select id="episode-range-selector" class="season-selector" style="display: none; background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;" onchange="UI.renderEpisodeChunk(${tvId}, this.value)">
+                    </select>
+                </div>
+                <div class="carousel" id="episodes-container">
+                    <!-- Episodes injected here -->
+                </div>
+            </section>
+        `;
+    },
+
+    loadSeasonEpisodes: async (tvId, seasonNum) => {
+        const container = document.getElementById('episodes-container');
+        if (container) container.innerHTML = '<div class="loader" style="margin: 20px auto;"></div>';
+        
+        const episodes = await API.getEpisodes(tvId, seasonNum);
+        window.currentSeasonEpisodes = episodes;
+        
+        const rangeSelector = document.getElementById('episode-range-selector');
+        if (episodes && episodes.length > 100) {
+            rangeSelector.style.display = 'block';
+            let options = '';
+            for (let i = 0; i < episodes.length; i += 100) {
+                let start = i + 1;
+                let end = Math.min(i + 100, episodes.length);
+                options += `<option value="${i}">${start} - ${end}</option>`;
+            }
+            rangeSelector.innerHTML = options;
+            rangeSelector.value = 0;
+            UI.renderEpisodeChunk(tvId, 0);
+        } else {
+            if (rangeSelector) rangeSelector.style.display = 'none';
+            UI.renderEpisodeChunk(tvId, 0, episodes ? episodes.length : 100);
+        }
+    },
+
+    renderEpisodeChunk: (tvId, startIndex, chunkSize = 100) => {
+        const episodes = window.currentSeasonEpisodes;
+        if (!episodes || episodes.length === 0) {
+            const container = document.getElementById('episodes-container');
+            if (container) container.innerHTML = '<p style="color: #aaa; margin-top: 10px;">No episodes found for this season.</p>';
+            return;
+        }
+        
+        startIndex = parseInt(startIndex);
+        const chunk = episodes.slice(startIndex, startIndex + chunkSize);
+        
+        let cards = chunk.map(ep => `
             <div class="episode-card" onclick="Player.play(${tvId}, 'tv', 1, ${ep.episode_number})">
                 <div class="episode-image-wrapper">
                     <img src="${ep.still}" alt="${ep.title}" class="card-img" loading="lazy">
@@ -257,17 +317,13 @@ const UI = {
                 </div>
             </div>
         `).join('');
-
-        return `
-            <section class="content-row">
-                <div class="row-header">
-                    <h3 class="row-title">${title}</h3>
-                </div>
-                <div class="carousel">
-                    ${cards}
-                </div>
-            </section>
-        `;
+        
+        const container = document.getElementById('episodes-container');
+        if (container) {
+            container.innerHTML = cards;
+            // Scroll to the start of the carousel
+            container.scrollLeft = 0;
+        }
     },
     
     renderGrid: async (title, fetchFunction) => {
