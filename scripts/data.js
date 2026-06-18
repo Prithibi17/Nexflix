@@ -167,5 +167,80 @@ const API = {
     getRecommendations: async (id, type = 'movie', page = 1) => {
         const data = await API.fetchData(`/${type}/${id}/recommendations?page=${page}`);
         return data && data.results ? data.results.map(item => API.formatMedia(item, type)) : [];
+    },
+
+    discoverAdvanced: async (params, page = 1) => {
+        let endpoint = '';
+        let queryParams = [`page=${page}`];
+
+        let targetType = params.type || 'movie';
+        
+        // Anime is just TV with genre 16 and specific languages
+        if (targetType === 'anime') {
+            targetType = 'tv';
+            if (!params.genres || params.genres.length === 0) {
+                params.genres = ['16'];
+            } else if (!params.genres.includes('16')) {
+                params.genres.push('16');
+            }
+            if (!params.language) {
+                params.language = 'ja|ko|zh';
+            }
+        }
+
+        if (params.query) {
+            endpoint = `/search/${targetType}`;
+            queryParams.push(`query=${encodeURIComponent(params.query)}`);
+            // Search endpoints largely ignore other discover parameters like with_genres
+        } else {
+            endpoint = `/discover/${targetType}`;
+            
+            if (params.genres && params.genres.length > 0) {
+                queryParams.push(`with_genres=${params.genres.join(',')}`);
+            }
+
+            if (params.status && params.status.length > 0) {
+                // TV status mapping: 0=Returning, 3=Ended. Movie status is string-based, TMDB doesn't filter movies by status easily.
+                if (targetType === 'tv') {
+                    queryParams.push(`with_status=${params.status.join('|')}`);
+                }
+            }
+
+            if (params.language) {
+                // To support 'ja|ko|zh' we shouldn't encode the | if passed as string directly, or just encode it properly.
+                // with_original_language takes a pipe separated list natively in TMDB API.
+                let langStr = params.language.replace(/\|/g, '%7C');
+                queryParams.push(`with_original_language=${langStr}`);
+            }
+
+            if (params.country) {
+                queryParams.push(`with_origin_country=${params.country}`);
+            }
+
+            if (params.sort) {
+                queryParams.push(`sort_by=${params.sort}`);
+            } else {
+                queryParams.push(`sort_by=popularity.desc`);
+            }
+            
+            if (params.year) {
+                if (targetType === 'movie') {
+                    queryParams.push(`primary_release_year=${params.year}`);
+                } else {
+                    queryParams.push(`first_air_date_year=${params.year}`);
+                }
+            }
+        }
+
+        const data = await API.fetchData(`${endpoint}?${queryParams.join('&')}`);
+        
+        if (data && data.results) {
+            return {
+                results: data.results.map(item => API.formatMedia(item, targetType)),
+                totalPages: Math.min(data.total_pages, 500), // TMDB page limit
+                totalResults: data.total_results
+            };
+        }
+        return { results: [], totalPages: 0, totalResults: 0 };
     }
 };

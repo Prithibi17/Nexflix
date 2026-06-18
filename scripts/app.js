@@ -62,9 +62,12 @@ const App = {
                 App.state.activeGridFetcher = API.getPopularSeries;
                 await UI.renderGrid('Popular TV Shows', App.state.activeGridFetcher);
             }
-            else if (hash === 'categories' || hash === 'mylist' || hash === 'trending') {
+            else if (hash === 'categories' || hash === 'trending') {
                 App.state.activeGridFetcher = API.getTrending;
-                await UI.renderGrid(hash === 'mylist' ? 'My List' : 'Trending Now', App.state.activeGridFetcher);
+                await UI.renderGrid('Trending Now', App.state.activeGridFetcher);
+            }
+            else if (hash === 'filter') {
+                await UI.renderFilterDashboard();
             }
             else if (hash === 'action') {
                 App.state.activeGridFetcher = API.getActionMovies;

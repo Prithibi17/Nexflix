@@ -772,3 +772,195 @@
 @media (max-width: 768px) {
     .four-columns { grid-template-columns: 1fr; }
 }
+
+/* =========================================
+   Filter Dashboard Styles
+   ========================================= */
+
+.filter-dashboard-container {
+    padding: var(--spacing-xl);
+    max-width: 1440px;
+    margin: 100px auto 0;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    background: #151821;
+    padding: 15px;
+    border-radius: 8px;
+    align-items: center;
+}
+
+.filter-search-box input {
+    background: #fff;
+    color: #333;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    outline: none;
+    min-width: 200px;
+}
+
+.custom-dropdown {
+    position: relative;
+    user-select: none;
+}
+
+.dropdown-header {
+    background: #1c202a;
+    color: #e5e5e5;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 150px;
+    justify-content: space-between;
+}
+
+.dropdown-header i {
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.dropdown-panel {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 5px;
+    background: #1c202a;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 15px;
+    z-index: 100;
+    min-width: max-content;
+}
+
+.custom-dropdown.active .dropdown-panel {
+    display: block;
+}
+
+.dropdown-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+/* Custom Checkbox/Radio */
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.filter-option input {
+    display: none;
+}
+
+.checkmark {
+    width: 16px;
+    height: 16px;
+    background: #2b3040;
+    border-radius: 3px;
+    display: inline-block;
+    position: relative;
+}
+
+.filter-option input:checked + .checkmark {
+    background: #ff3c5b;
+}
+
+.filter-option input:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.filter-option input[type="radio"] + .checkmark {
+    border-radius: 50%;
+}
+
+.filter-option input[type="radio"]:checked + .checkmark::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    border: none;
+    transform: none;
+}
+
+.filter-btn {
+    background: #1c202a;
+    color: #e5e5e5;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+    margin-left: auto;
+    transition: background 0.2s;
+}
+
+.filter-btn:hover {
+    background: #ff3c5b;
+    color: white;
+}
+
+/* Pagination */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 40px;
+}
+
+.page-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.page-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.page-btn.active {
+    background: #ffb8c6;
+    color: #000;
+}
+
+.page-dots {
+    color: #aaa;
+}
+
+#dropdown-genres .dropdown-grid {
+    grid-template-columns: repeat(3, 1fr);
+    min-width: 350px;
+}

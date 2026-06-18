@@ -625,6 +625,223 @@ const UI = {
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
+    },
+
+    // --- Filter Dashboard Methods ---
+
+    renderFilterDashboard: async () => {
+        // Setup state
+        window.filterState = {
+            query: '',
+            type: 'tv', // Default
+            genres: [],
+            status: [],
+            country: '',
+            language: '',
+            year: '',
+            sort: 'popularity.desc',
+            page: 1
+        };
+
+        const appContent = document.getElementById('app-content');
+        
+        const genreOptions = [
+            { id: 28, label: 'Action' }, { id: 12, label: 'Adventure' }, { id: 16, label: 'Animation' }, 
+            { id: 35, label: 'Comedy' }, { id: 80, label: 'Crime' }, { id: 99, label: 'Documentary' }, 
+            { id: 18, label: 'Drama' }, { id: 10751, label: 'Family' }, { id: 14, label: 'Fantasy' }, 
+            { id: 36, label: 'History' }, { id: 27, label: 'Horror' }, { id: 10402, label: 'Music' }, 
+            { id: 9648, label: 'Mystery' }, { id: 10749, label: 'Romance' }, { id: 878, label: 'Science Fiction' }, 
+            { id: 10770, label: 'TV Movie' }, { id: 53, label: 'Thriller' }, { id: 10752, label: 'War' }, 
+            { id: 37, label: 'Western' }
+        ];
+
+        // Custom Dropdown Builder
+        const buildDropdown = (id, title, options, type = 'checkbox') => {
+            let optionsHtml = options.map(opt => `
+                <label class="filter-option">
+                    <input type="${type}" name="${id}" value="${opt.id}" onchange="UI.updateFilterState('${id}', '${opt.id}', this.checked, '${type}')">
+                    <span class="checkmark"></span>
+                    ${opt.label}
+                </label>
+            `).join('');
+
+            return `
+                <div class="custom-dropdown" id="dropdown-${id}">
+                    <div class="dropdown-header" onclick="UI.toggleDropdown('${id}')">
+                        <span>${title}</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="dropdown-panel">
+                        <div class="dropdown-grid">
+                            ${optionsHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        let html = `
+            <div class="filter-dashboard-container">
+                <h1 style="color: #ff3c5b; margin-bottom: 20px; font-size: 2rem;">Filters</h1>
+                
+                <div class="filter-bar">
+                    <div class="filter-search-box">
+                        <input type="text" id="filter-search-input" placeholder="Search..." oninput="UI.debounceFilterSearch(this.value)">
+                    </div>
+                    ${buildDropdown('genres', 'Select genre', genreOptions)}
+                    ${buildDropdown('status', 'Select status', [
+                        { id: 0, label: 'Releasing' },
+                        { id: 3, label: 'Completed' }
+                    ])}
+                    ${buildDropdown('country', 'Select country', [
+                        { id: 'US', label: 'United States' },
+                        { id: 'JP', label: 'Japan' },
+                        { id: 'KR', label: 'South Korea' },
+                        { id: 'CN', label: 'China' },
+                        { id: 'GB', label: 'United Kingdom' }
+                    ], 'radio')}
+                    ${buildDropdown('language', 'Select language', [
+                        { id: 'en', label: 'English' },
+                        { id: 'ja', label: 'Japanese' },
+                        { id: 'ko', label: 'Korean' },
+                        { id: 'zh', label: 'Chinese' },
+                        { id: 'es', label: 'Spanish' },
+                        { id: 'fr', label: 'French' }
+                    ], 'radio')}
+                    ${buildDropdown('year', 'Select year', [
+                        { id: '2026', label: '2026' },
+                        { id: '2025', label: '2025' },
+                        { id: '2024', label: '2024' },
+                        { id: '2023', label: '2023' }
+                    ], 'radio')}
+                    ${buildDropdown('sort', 'Sort by', [
+                        { id: 'popularity.desc', label: 'Most Popular' },
+                        { id: 'vote_average.desc', label: 'Highest Rated' },
+                        { id: 'primary_release_date.desc', label: 'Recently Added' }
+                    ], 'radio')}
+                    ${buildDropdown('type', 'Select Type', [
+                        { id: 'tv', label: 'TV Shows' },
+                        { id: 'anime', label: 'Anime' },
+                        { id: 'movie', label: 'Movies' }
+                    ], 'radio')}
+                    
+                    <button class="filter-btn" onclick="UI.applyFilters()"><i class="fas fa-filter"></i> Filter</button>
+                </div>
+
+                <div id="filter-results-container" class="dashboard-grid" style="margin-top: 30px;">
+                    <!-- Results will be injected here -->
+                </div>
+                
+                <div id="filter-pagination" class="pagination-container">
+                    <!-- Pagination injected here -->
+                </div>
+            </div>
+        `;
+
+        appContent.innerHTML = html;
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.custom-dropdown').forEach(d => d.classList.remove('active'));
+            }
+        });
+
+        // Initial load
+        UI.applyFilters();
+    },
+
+    toggleDropdown: (id) => {
+        const el = document.getElementById(`dropdown-${id}`);
+        // Close others
+        document.querySelectorAll('.custom-dropdown').forEach(d => {
+            if (d !== el) d.classList.remove('active');
+        });
+        el.classList.toggle('active');
+    },
+
+    updateFilterState: (key, value, isChecked, type) => {
+        if (type === 'radio') {
+            window.filterState[key] = value;
+        } else {
+            // Checkbox logic
+            if (!Array.isArray(window.filterState[key])) {
+                window.filterState[key] = [];
+            }
+            if (isChecked) {
+                if (!window.filterState[key].includes(value)) {
+                    window.filterState[key].push(value);
+                }
+            } else {
+                window.filterState[key] = window.filterState[key].filter(v => v !== value);
+            }
+        }
+    },
+
+    debounceFilterSearch: (val) => {
+        clearTimeout(window.filterSearchTimeout);
+        window.filterSearchTimeout = setTimeout(() => {
+            window.filterState.query = val;
+            window.filterState.page = 1;
+            UI.applyFilters();
+        }, 500);
+    },
+
+    applyFilters: async () => {
+        const container = document.getElementById('filter-results-container');
+        if (!container) return;
+        
+        container.innerHTML = `<div class="loader" style="margin: 50px auto;"></div>`;
+        document.getElementById('filter-pagination').innerHTML = ''; // Clear pagination while loading
+        
+        // Reset to page 1 if just clicking filter button manually (optional, but good UX for manual clicks)
+        
+        const data = await API.discoverAdvanced(window.filterState, window.filterState.page);
+        
+        if (!data || !data.results || data.results.length === 0) {
+            container.innerHTML = `<h3 style="text-align:center; padding: 50px; grid-column: 1 / -1; color: #aaa;">No results found. Try adjusting your filters.</h3>`;
+            return;
+        }
+
+        container.innerHTML = data.results.map(item => UI.createCardHTML(item)).join('');
+        
+        // Render pagination
+        let paginationHtml = '';
+        const totalPages = data.totalPages;
+        const current = window.filterState.page;
+        
+        const createPageBtn = (num, text, active) => 
+            `<button class="page-btn ${active ? 'active' : ''}" onclick="UI.changeFilterPage(${num})">${text || num}</button>`;
+
+        if (totalPages > 1) {
+            if (current > 1) {
+                paginationHtml += createPageBtn(current - 1, '<i class="fas fa-chevron-left"></i>');
+            }
+            
+            let start = Math.max(1, current - 2);
+            let end = Math.min(totalPages, current + 2);
+            
+            for (let i = start; i <= end; i++) {
+                paginationHtml += createPageBtn(i, i, i === current);
+            }
+            
+            if (end < totalPages) {
+                paginationHtml += `<span class="page-dots">...</span>`;
+                paginationHtml += createPageBtn(totalPages, totalPages, false);
+            }
+
+            if (current < totalPages) {
+                paginationHtml += createPageBtn(current + 1, '<i class="fas fa-chevron-right"></i>');
+            }
+        }
+        
+        document.getElementById('filter-pagination').innerHTML = paginationHtml;
+    },
+
+    changeFilterPage: (pageNum) => {
+        window.filterState.page = pageNum;
+        UI.applyFilters();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 };
 
