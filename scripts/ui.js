@@ -818,7 +818,7 @@ const UI = {
         return `
             <div class="custom-dropdown" id="dropdown-${id}">
                 <div class="dropdown-header" onclick="UI.toggleDropdown('${id}')">
-                    <span>${title}</span>
+                    <span id="dropdown-header-text-${id}" data-original-title="${title}">${title}</span>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="dropdown-panel">
@@ -948,6 +948,10 @@ const UI = {
                     <button class="filter-submit-btn" onclick="UI.triggerFilterSearch()"><i class="fas fa-filter"></i> Apply Filters</button>
                 </div>
 
+                <div id="filter-chips-container" class="filter-chips-container">
+                    <!-- Chips will be injected here -->
+                </div>
+
                 <div id="filter-results-container" class="filter-results-grid">
                     <!-- Results will be injected here -->
                 </div>
@@ -959,6 +963,10 @@ const UI = {
         
         // Trigger initial type setup to inject genres and specific filters
         await UI.setupTypeSpecificFilters('movie');        
+        
+        // Initial UI update for headers and chips
+        UI.updateFilterUI();
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.custom-dropdown')) {
@@ -1071,6 +1079,119 @@ const UI = {
         if (genreContainer) {
             genreContainer.innerHTML = UI.buildFilterDropdown('genres', 'Select genre', genreOptions);
         }
+        
+        // Since we injected new HTML, we should update UI state
+        UI.updateFilterUI();
+    },
+
+    updateFilterUI: () => {
+        // 1. Update dropdown headers
+        document.querySelectorAll('.custom-dropdown').forEach(dropdown => {
+            const id = dropdown.id.replace('dropdown-', '');
+            const headerSpan = document.getElementById(`dropdown-header-text-${id}`);
+            if (!headerSpan) return;
+            const originalTitle = headerSpan.getAttribute('data-original-title');
+            
+            // Collect selected options within this specific dropdown
+            const checkedInputs = Array.from(dropdown.querySelectorAll('input:checked'));
+            
+            if (checkedInputs.length === 0) {
+                headerSpan.textContent = originalTitle;
+            } else if (checkedInputs.length === 1) {
+                const labelText = checkedInputs[0].parentElement.textContent.trim();
+                headerSpan.textContent = labelText;
+            } else if (checkedInputs.length === 2) {
+                const labelText1 = checkedInputs[0].parentElement.textContent.trim();
+                const labelText2 = checkedInputs[1].parentElement.textContent.trim();
+                headerSpan.textContent = `${labelText1}, ${labelText2}`;
+            } else {
+                const labelText1 = checkedInputs[0].parentElement.textContent.trim();
+                headerSpan.textContent = `${labelText1} +${checkedInputs.length - 1}`;
+            }
+        });
+
+        // 2. Render Chips
+        const chipsContainer = document.getElementById('filter-chips-container');
+        if (!chipsContainer) return;
+        
+        let chipsHtml = '';
+        let hasFilters = false;
+
+        document.querySelectorAll('.filter-dashboard-container input:checked').forEach(input => {
+            const labelText = input.parentElement.textContent.trim();
+            const key = input.name;
+            const value = input.value;
+            const type = input.type;
+            
+            // Don't show 'sort' in chips as it's a default state
+            if (key === 'sort') return;
+
+            hasFilters = true;
+            chipsHtml += `<div class="filter-chip" onclick="UI.removeFilter('${key}', '${value}', '${type}')">${labelText} <i class="fas fa-times"></i></div>`;
+        });
+
+        if (hasFilters) {
+            chipsHtml += `<div class="clear-all-chips-btn" onclick="UI.clearAllFilters()">Clear All</div>`;
+        }
+        
+        chipsContainer.innerHTML = chipsHtml;
+    },
+
+    removeFilter: async (key, value, type) => {
+        const input = document.querySelector(`input[name="${key}"][value="${value}"]`);
+        if (input) {
+            input.checked = false;
+        }
+
+        if (type === 'radio') {
+            window.filterState[key] = ''; 
+            if (key === 'type') {
+                window.filterState[key] = 'movie'; 
+                const defaultType = document.querySelector('input[name="type"][value="movie"]');
+                if (defaultType) defaultType.checked = true;
+                window.filterState.genres = [];
+                await UI.setupTypeSpecificFilters('movie');
+            }
+        } else {
+            if (Array.isArray(window.filterState[key])) {
+                window.filterState[key] = window.filterState[key].filter(v => v !== value);
+            }
+        }
+
+        UI.updateFilterUI();
+        UI.triggerFilterSearch();
+    },
+
+    clearAllFilters: async () => {
+        window.filterState = {
+            query: '',
+            type: 'movie', 
+            genres: [],
+            keywords: [],
+            companies: [],
+            networks: [],
+            rating: '',
+            runtime: '',
+            status: [],
+            country: '',
+            language: '',
+            year: '',
+            sort: 'popularity.desc',
+            page: 1
+        };
+
+        document.querySelectorAll('.filter-dashboard-container input').forEach(input => {
+            input.checked = false;
+        });
+        
+        const defaultTypeRadio = document.querySelector('input[name="type"][value="movie"]');
+        if (defaultTypeRadio) defaultTypeRadio.checked = true;
+        const defaultSortRadio = document.querySelector('input[name="sort"][value="popularity.desc"]');
+        if (defaultSortRadio) defaultSortRadio.checked = true;
+
+        await UI.setupTypeSpecificFilters('movie');
+        UI.updateFilterUI();
+        UI.triggerFilterSearch();
     },
 
     updateFilterState: async (key, value, isChecked, type) => {
@@ -1099,6 +1220,8 @@ const UI = {
                 window.filterState[key] = window.filterState[key].filter(v => v !== value);
             }
         }
+        
+        UI.updateFilterUI();
     },
 
     updateFilterSearch: (val) => {
