@@ -666,7 +666,7 @@ const UI = {
                                             <span>Action, Fantasy, Adventure</span>
                                             <span class="movies-hero-age">UA 16+</span>
                                         </div>
-                                        <p class="movies-hero-desc">${movie.overview.substring(0, 200)}...</p>
+                                        <p class="movies-hero-desc">${movie.description.substring(0, 200)}...</p>
                                         <div class="movies-hero-buttons">
                                             <button class="btn-play-now" onclick="window.location.hash='#movie/${movie.id}'"><i class="fas fa-play"></i> Play Now</button>
                                             <button class="btn-more-info" onclick="window.location.hash='#movie/${movie.id}'"><i class="fas fa-info-circle"></i> More Info</button>
