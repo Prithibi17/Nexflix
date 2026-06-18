@@ -596,6 +596,18 @@
     gap: var(--spacing-xl);
 }
 
+/* Dashboard Grid for small cards */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.dashboard-grid .media-card {
+    min-width: 0; /* Overrides the 200px min-width from carousel cards */
+    width: 100%;
+}
+
 /* Genre Tags */
 .genre-cloud {
     display: flex;
@@ -640,11 +652,6 @@
     color: var(--text-secondary);
     width: 30px;
     text-align: right;
-}
-
-/* Flush Grid (No gap, no border radius) */
-.flush-grid .media-card {
-    border-radius: 0;
 }
 
 @media (max-width: 1200px) {
