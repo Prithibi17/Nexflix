@@ -496,44 +496,105 @@
 }
 
 /* =========================================
-   Anime Dashboard Styles
+   Anime Dashboard Styles (HiAnime Replica)
    ========================================= */
+
+.anime-container {
+    background-color: #0b0c10;
+    color: #e5e5e5;
+    padding: var(--spacing-xl);
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+/* Top Row: Hero and Most Viewed */
+.anime-top-row {
+    display: flex;
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.anime-hero-card {
+    flex: 3;
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 450px;
+    display: flex;
+    align-items: flex-end;
+    padding: var(--spacing-xl);
+    background-size: cover;
+    background-position: center;
+}
+
+.anime-hero-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, #0b0c10 20%, transparent 80%),
+                linear-gradient(to top, #0b0c10 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.anime-hero-content {
+    position: relative;
+    z-index: 10;
+    max-width: 60%;
+}
+
+.anime-most-viewed {
+    flex: 1;
+    background: #151821;
+    border-radius: 12px;
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+}
 
 /* Numbered Cards for Trending */
 .numbered-card {
     position: relative;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .numbered-card::before {
     content: attr(data-number);
     position: absolute;
-    bottom: -15px;
-    left: -10px;
-    font-size: 4rem;
-    font-weight: 800;
-    color: var(--accent-color);
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    top: 0;
+    left: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--accent-color);
+    padding: 4px 10px;
+    border-radius: 0 0 8px 0;
     z-index: 10;
-    opacity: 0.9;
-    font-family: 'Inter', sans-serif;
-    -webkit-text-stroke: 2px #fff;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
 }
 
 /* 4-Column Quick Lists */
 .four-columns {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: var(--spacing-xl);
-    padding: var(--spacing-xl);
-    background: linear-gradient(to bottom, var(--bg-tertiary), transparent);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.compact-list-col {
+    background: #151821;
+    border-radius: 12px;
+    padding: var(--spacing-md);
 }
 
 .compact-list-col h3 {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
+    font-size: 1rem;
+    color: #fff;
     margin-bottom: var(--spacing-md);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .compact-list-item {
@@ -542,19 +603,25 @@
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-sm);
     cursor: pointer;
-    padding: var(--spacing-xs);
-    border-radius: var(--radius-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: background var(--transition-fast);
 }
 
 .compact-list-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.compact-list-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .compact-thumbnail {
-    width: 50px;
-    height: 70px;
-    border-radius: var(--radius-sm);
+    width: 45px;
+    height: 65px;
+    border-radius: 4px;
     object-fit: cover;
     flex-shrink: 0;
 }
@@ -565,8 +632,8 @@
 }
 
 .compact-title {
-    font-size: 0.95rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -574,15 +641,24 @@
 }
 
 .compact-meta {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
+}
+
+.ep-badge {
+    font-size: 0.7rem;
+    color: #ff3c5b;
+    background: rgba(255, 60, 91, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: auto;
 }
 
 /* Main Dashboard Split Layout */
 .dashboard-layout {
     display: flex;
     gap: var(--spacing-xl);
-    padding: var(--spacing-xl);
 }
 
 .dashboard-main {
@@ -599,36 +675,46 @@
 /* Dashboard Grid for small cards */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: var(--spacing-md);
 }
 
 .dashboard-grid .media-card {
-    min-width: 0; /* Overrides the 200px min-width from carousel cards */
+    min-width: 0;
     width: 100%;
 }
 
 /* Genre Tags */
+.anime-genre-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: var(--spacing-xl);
+    background: #151821;
+    padding: var(--spacing-md);
+    border-radius: 12px;
+}
+
 .genre-cloud {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--spacing-sm);
+    gap: 8px;
 }
 
 .genre-tag {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
+    background: #1c202a;
+    color: #aaa;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: all var(--transition-fast);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
 }
 
 .genre-tag:hover {
-    background: var(--accent-color);
-    border-color: var(--accent-color);
+    background: #ff3c5b;
+    color: #fff;
 }
 
 /* Most Viewed List */
@@ -638,8 +724,8 @@
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-md);
     cursor: pointer;
-    padding-bottom: var(--spacing-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
 }
 
 .most-viewed-item:last-child {
@@ -647,24 +733,41 @@
 }
 
 .most-viewed-rank {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
-    color: var(--text-secondary);
-    width: 30px;
+    color: #ff3c5b;
+    width: 25px;
     text-align: right;
 }
 
-@media (max-width: 1200px) {
-    .four-columns {
-        grid-template-columns: repeat(2, 1fr);
-    }
+.schedule-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: var(--spacing-md);
+    background: #151821;
+    padding: var(--spacing-md);
+    border-radius: 12px;
 }
 
+.schedule-btn {
+    background: transparent;
+    color: #aaa;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    border-radius: 6px;
+}
+.schedule-btn.active {
+    background: #ff3c5b;
+    color: #fff;
+}
+
+@media (max-width: 1200px) {
+    .anime-top-row { flex-direction: column; }
+    .four-columns { grid-template-columns: repeat(2, 1fr); }
+    .dashboard-layout { flex-direction: column; }
+}
 @media (max-width: 768px) {
-    .four-columns {
-        grid-template-columns: 1fr;
-    }
-    .dashboard-layout {
-        flex-direction: column;
-    }
+    .four-columns { grid-template-columns: 1fr; }
 }

@@ -43,14 +43,20 @@
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-secondary);
+    padding: 6px 16px;
+    border-radius: 20px;
+    transition: all var(--transition-fast);
 }
 
-.nav-link.active, .nav-link:hover {
+.nav-link:hover {
     color: var(--text-primary);
+    background: rgba(255,255,255,0.1);
 }
 
 .nav-link.active {
     font-weight: 600;
+    background-color: var(--accent-color);
+    color: #fff;
 }
 
 .icon-btn {

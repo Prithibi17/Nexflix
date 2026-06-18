@@ -427,14 +427,7 @@ const UI = {
             `;
         }).join('');
 
-        return `
-            <div style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 1rem;">Most Viewed</h3>
-                <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
-                    ${listHtml}
-                </div>
-            </div>
-        `;
+        return `<div>${listHtml}</div>`;
     },
 
     renderAnimeDashboard: async () => {
@@ -455,57 +448,180 @@ const UI = {
             return;
         }
 
-        // Hero Spotlight
+        // Hero Spotlight (Contained)
         const heroData = trending[0];
         const hero = await API.getDetails(heroData.id, heroData.type || 'tv') || heroData;
-        let html = UI.renderHeroBannerHtml(hero);
-
-        // Trending Row (Numbered)
-        html += UI.buildNumberedCarousel('Trending', trending.slice(1, 20));
-
-        // 4-Column Quick Lists
-        html += `
-            <section class="four-columns">
-                ${UI.buildCompactList('New Added', recent)}
-                ${UI.buildCompactList('Most Popular', popular)}
-                ${UI.buildCompactList('Most Favorite', topRated)}
-                ${UI.buildCompactList('Completed', completed)}
-            </section>
-        `;
-
-        // Main Content / Sidebar Split
-        html += `
-            <section class="dashboard-layout">
-                <div class="dashboard-main">
-                    <h3 style="color: var(--accent-color); margin-bottom: 1rem;">Recently Updated</h3>
-                    <div class="dashboard-grid" style="margin-bottom: 3rem;">
-                        ${recent.slice(5, 17).map(item => UI.createCardHTML(item)).join('')}
+        const heroHtml = `
+            <div class="anime-hero-card" style="background-image: url('${hero.backdrop}'); cursor:pointer;" onclick="window.location.hash='#${hero.type}/${hero.id}'">
+                <div class="anime-hero-content">
+                    <div style="color: #ff3c5b; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem;"><i class="fas fa-fire"></i> #1 Trending Now</div>
+                    <h1 style="font-size: 3rem; margin-bottom: 10px; line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${hero.title}</h1>
+                    <div style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem; color: #ccc;">
+                        <span>${hero.year}</span>
+                        <span>16+</span>
+                        <span>${hero.genres ? hero.genres.slice(0,2).join(', ') : 'Animation'}</span>
                     </div>
-                    
-                    <h3 style="margin-bottom: 1rem;">Estimated Schedule</h3>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 2rem;">
-                        <button class="btn btn-primary">Sun</button>
-                        <button class="btn btn-secondary">Mon</button>
-                        <button class="btn btn-secondary">Tue</button>
-                        <button class="btn btn-secondary">Wed</button>
-                        <button class="btn btn-secondary">Thu</button>
-                        <button class="btn btn-secondary">Fri</button>
-                        <button class="btn btn-secondary">Sat</button>
-                    </div>
-                    <div class="dashboard-grid">
-                        ${trending.slice(15, 20).map(item => UI.createCardHTML(item)).join('')}
+                    <p style="font-size: 0.95rem; line-height: 1.6; color: #bbb; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${hero.description}</p>
+                    <div style="display: flex; gap: 15px;">
+                        <button class="btn btn-primary" style="background: #ff3c5b; border-radius: 25px; padding: 10px 24px;"><i class="fas fa-play"></i> Play Now</button>
+                        <button class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-radius: 25px; padding: 10px 24px;"><i class="fas fa-plus"></i> My List</button>
                     </div>
                 </div>
-                <div class="dashboard-sidebar">
-                    ${UI.buildGenreCloud()}
+            </div>
+        `;
+
+        let html = `<div class="anime-container">`;
+
+        // Top Row: Hero + Most Viewed
+        html += `
+            <div class="anime-top-row">
+                ${heroHtml}
+                <div class="anime-most-viewed">
+                    <h3 style="margin-bottom: 15px; color: #fff; font-size: 1.1rem; display: flex; justify-content: space-between;">
+                        <span><i class="fas fa-chart-line" style="color: #ff3c5b;"></i> Most Viewed</span>
+                        <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
+                    </h3>
                     ${UI.buildMostViewedList(popular)}
                 </div>
+            </div>
+        `;
+
+        // Trending Carousel
+        html += `
+            <div style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 15px; color: #fff; font-size: 1.2rem; display: flex; justify-content: space-between;">
+                    <span>🔥 Trending Now</span>
+                    <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All <i class="fas fa-chevron-right"></i></span>
+                </h3>
+                <div class="carousel">
+                    ${trending.slice(1, 15).map((item, index) => {
+                        const num = (index + 1).toString().padStart(2, '0');
+                        return `
+                            <div class="media-card numbered-card" data-number="${num}" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                                <div class="card-image-wrapper">
+                                    <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
+                                </div>
+                                <div class="card-overlay">
+                                    <h4 class="card-title">${item.title}</h4>
+                                    <div class="card-meta">
+                                        <span>${item.year}</span>
+                                        <span><i class="fas fa-star rating"></i> ${item.rating}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+
+        // Genre Bar
+        html += `
+            <div class="anime-genre-bar">
+                <button class="genre-tag" style="background: #ff3c5b; color: white;"><i class="fas fa-layer-group"></i> All</button>
+                ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical'].map(g => `<button class="genre-tag"><i class="fas fa-star" style="color:#ff3c5b; font-size:0.6rem;"></i> ${g}</button>`).join('')}
+            </div>
+        `;
+
+        // 4 Columns
+        const buildCol = (title, icon, items) => {
+            return `
+                <div class="compact-list-col">
+                    <h3 style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>${icon} ${title}</span>
+                        <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
+                    </h3>
+                    ${items.slice(0, 5).map(item => `
+                        <div class="compact-list-item" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                            <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
+                            <div class="compact-info">
+                                <div class="compact-title">${item.title}</div>
+                                <div class="compact-meta">TV • ${item.year} • <i class="fas fa-star" style="color: #ff3c5b;"></i> ${item.rating}</div>
+                            </div>
+                            <div class="ep-badge">EP ${Math.floor(Math.random()*12)+1}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        };
+
+        html += `
+            <section class="four-columns">
+                ${buildCol('New Added', '<i class="fas fa-comment-dots" style="color:#4caf50;"></i>', recent)}
+                ${buildCol('Most Popular', '<i class="fas fa-star" style="color:#ffc107;"></i>', popular)}
+                ${buildCol('Most Favorite', '<i class="fas fa-fire" style="color:#ff3c5b;"></i>', topRated)}
+                ${buildCol('Completed', '<i class="fas fa-check-circle" style="color:#4caf50;"></i>', completed)}
             </section>
         `;
+
+        // Bottom Split
+        html += `
+            <section class="dashboard-layout">
+                <div class="dashboard-sidebar">
+                    <div class="compact-list-col">
+                        <h3 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <span><i class="fas fa-tags" style="color:#2196f3;"></i> Genres</span>
+                            <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
+                        </h3>
+                        <div class="genre-cloud" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+                            ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical', 'Music'].map(g => `<button class="genre-tag" style="width:100%; text-align:left;"><i class="fas fa-circle" style="color:#ff3c5b; font-size:0.4rem; margin-right:5px;"></i> ${g}</button>`).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="dashboard-main">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-star" style="color:#ffc107;"></i> Recently Updated</h3>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;">View All</span>
+                    </div>
+                    <div class="dashboard-grid" style="margin-bottom: 3rem;">
+                        ${recent.slice(5, 11).map(item => `
+                            <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'" style="min-width:0; width:100%;">
+                                <div class="card-image-wrapper">
+                                    <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
+                                </div>
+                                <div style="padding: 10px 0;">
+                                    <h4 class="card-title" style="font-size:0.9rem; margin-bottom:4px;">${item.title}</h4>
+                                    <div class="card-meta" style="font-size:0.8rem; color:#aaa;">EP ${Math.floor(Math.random()*24)+1} • Today</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-calendar-alt" style="color:#ff3c5b;"></i> Estimated Schedule</h3>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;">View Full Schedule</span>
+                    </div>
+                    <div class="schedule-header">
+                        <button class="schedule-btn active">Sun</button>
+                        <button class="schedule-btn">Mon</button>
+                        <button class="schedule-btn">Tue</button>
+                        <button class="schedule-btn">Wed</button>
+                        <button class="schedule-btn">Thu</button>
+                        <button class="schedule-btn">Fri</button>
+                        <button class="schedule-btn">Sat</button>
+                    </div>
+                    <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
+                        ${trending.slice(15, 20).map((item, idx) => {
+                            const times = ["08:00 AM", "09:30 AM", "11:00 AM", "01:30 PM", "03:00 PM", "05:00 PM"];
+                            return `
+                            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer;" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                                <img src="${item.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:4px;" loading="lazy">
+                                <div style="overflow:hidden;">
+                                    <div style="font-size:0.75rem; color:#aaa; margin-bottom:2px;">${times[idx % times.length]}</div>
+                                    <div style="font-size:0.85rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
+                                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">EP ${Math.floor(Math.random()*20)+1} <span style="background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:2px; margin-left:4px;">Upcoming</span></div>
+                                </div>
+                            </div>
+                        `;}).join('')}
+                    </div>
+                </div>
+            </section>
+        `;
+
+        html += `</div>`;
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
-        UI.setupHeroCarousel(trending);
     }
 };
 
