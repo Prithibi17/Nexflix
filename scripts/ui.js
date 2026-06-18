@@ -341,9 +341,8 @@ const UI = {
                         <span>${item.year}</span>
                         <span><i class="fas fa-star rating"></i> ${item.rating}</span>
                     </div>
-                </div>
             </div>
-        }).join('');
+        `).join('');
     },
 
     // --- Anime Dashboard Specific Rendering ---
