@@ -45,7 +45,7 @@ const API = {
 
     getPopularMovies: async (page = 1) => {
         const data = await API.fetchData(`/movie/popular?page=${page}`);
-        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
     getAnime: async (page = 1) => {
@@ -84,27 +84,27 @@ const API = {
 
     getActionMovies: async (page = 1) => {
         const data = await API.fetchData(`/discover/movie?with_genres=28&page=${page}`);
-        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
     getTopRatedMovies: async (page = 1) => {
         const data = await API.fetchData(`/movie/top_rated?page=${page}`);
-        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
     getPopularSeries: async (page = 1) => {
         const data = await API.fetchData(`/tv/popular?page=${page}`);
-        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
     getComedyMovies: async (page = 1) => {
         const data = await API.fetchData(`/discover/movie?with_genres=35&page=${page}`);
-        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
     getSciFiMovies: async (page = 1) => {
         const data = await API.fetchData(`/discover/movie?with_genres=878&page=${page}`);
-        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+        return data && data.results ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
     getDetails: async (id, type = 'movie') => {
