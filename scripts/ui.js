@@ -208,10 +208,18 @@ const UI = {
         `;
         
         let extraHtml = '';
-        if (type === 'tv' && media.seasons && media.seasons.length > 0) {
-            // Find season 1 or the first valid season
-            const season = media.seasons.find(s => s.season_number > 0) || media.seasons[0];
-            extraHtml = UI.buildSeasonSection(media.seasons, season.season_number, id);
+        let relatedShows = [];
+        if (type === 'tv') {
+            // Fetch related shows if it's an Animation/Anime to link split sequels
+            if (media.genres.some(g => g === 'Animation' || g === 'Anime')) {
+                relatedShows = await API.getRelatedAnimeShows(media.title, id);
+            }
+            
+            if ((media.seasons && media.seasons.length > 0) || relatedShows.length > 0) {
+                const season = media.seasons && media.seasons.length > 0 ? (media.seasons.find(s => s.season_number > 0) || media.seasons[0]) : null;
+                const currentSeasonNum = season ? season.season_number : 1;
+                extraHtml = UI.buildSeasonSection(media.seasons || [], currentSeasonNum, id, relatedShows);
+            }
         } else if (type === 'movie' && media.belongs_to_collection) {
             const collectionParts = await API.getCollection(media.belongs_to_collection.id);
             if (collectionParts && collectionParts.length > 0) {
@@ -245,20 +253,38 @@ const UI = {
         }
     },
 
-    buildSeasonSection: (seasons, currentSeasonNum, tvId) => {
-        if (!seasons || seasons.length === 0) return '';
+    buildSeasonSection: (seasons, currentSeasonNum, tvId, relatedShows = []) => {
+        if ((!seasons || seasons.length === 0) && relatedShows.length === 0) return '';
         
-        // Render valid seasons
-        let seasonOptions = seasons.filter(s => s.season_number > 0).map(s => {
-            let name = s.name || `Season ${s.season_number}`;
-            return `<option value="${s.season_number}" ${s.season_number === currentSeasonNum ? 'selected' : ''}>${name}</option>`;
-        }).join('');
+        let optionsHtml = '';
+        
+        // Render valid seasons for current show
+        if (seasons && seasons.length > 0) {
+            let seasonOptions = seasons.filter(s => s.season_number > 0).map(s => {
+                let name = s.name || `Season ${s.season_number}`;
+                return `<option value="season_${s.season_number}" ${s.season_number === currentSeasonNum ? 'selected' : ''}>${name}</option>`;
+            }).join('');
+            
+            if (relatedShows.length > 0) {
+                optionsHtml += `<optgroup label="This Series">${seasonOptions}</optgroup>`;
+            } else {
+                optionsHtml += seasonOptions;
+            }
+        }
+        
+        // Render related shows (sequels/prequels)
+        if (relatedShows && relatedShows.length > 0) {
+            let relatedOptions = relatedShows.map(show => {
+                return `<option value="show_${show.id}">${show.name}</option>`;
+            }).join('');
+            optionsHtml += `<optgroup label="Related Series (Sequels/Prequels)">${relatedOptions}</optgroup>`;
+        }
 
         return `
             <section class="content-row" id="season-episodes-section">
                 <div class="row-header" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px;">
-                    <select class="season-selector" onchange="UI.loadSeasonEpisodes(${tvId}, this.value)" style="background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;">
-                        ${seasonOptions}
+                    <select class="season-selector" onchange="UI.handleSeasonDropdownChange(${tvId}, this.value)" style="background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer; max-width: 400px; text-overflow: ellipsis;">
+                        ${optionsHtml}
                     </select>
                     <select id="episode-range-selector" class="season-selector" style="display: none; background: #1c202a; color: #fff; border: 1px solid rgba(255,60,91,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;" onchange="UI.renderEpisodeChunk(${tvId}, this.value)">
                     </select>
@@ -268,6 +294,16 @@ const UI = {
                 </div>
             </section>
         `;
+    },
+
+    handleSeasonDropdownChange: (tvId, value) => {
+        if (value.startsWith('show_')) {
+            const showId = value.replace('show_', '');
+            App.navigate('details', { type: 'tv', id: showId });
+        } else if (value.startsWith('season_')) {
+            const seasonNum = value.replace('season_', '');
+            UI.loadSeasonEpisodes(tvId, seasonNum);
+        }
     },
 
     loadSeasonEpisodes: async (tvId, seasonNum) => {

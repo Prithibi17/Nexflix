@@ -206,6 +206,29 @@ const API = {
         }));
     },
 
+    getRelatedAnimeShows: async (title, currentId) => {
+        // Strip out subtitles (e.g., "Sword Art Online: Alicization" -> "Sword Art Online")
+        const baseTitle = title.split(':')[0].split('-')[0].trim();
+        const data = await API.fetchData(`/search/tv?query=${encodeURIComponent(baseTitle)}`);
+        if (!data || !data.results) return [];
+        
+        // Filter those that include the base title
+        let related = data.results.filter(show => {
+            const showName = show.name ? show.name.toLowerCase() : '';
+            const showOriginal = show.original_name ? show.original_name.toLowerCase() : '';
+            const base = baseTitle.toLowerCase();
+            return showName.includes(base) || showOriginal.includes(base);
+        });
+        
+        // Remove the current show
+        related = related.filter(show => show.id !== currentId);
+        
+        // Sort by first air date
+        related.sort((a, b) => new Date(a.first_air_date || '9999') - new Date(b.first_air_date || '9999'));
+        
+        return related;
+    },
+
     getRecommendations: async (id, type = 'movie', page = 1) => {
         const data = await API.fetchData(`/${type}/${id}/recommendations?page=${page}`);
         return data && data.results ? data.results.map(item => API.formatMedia(item, type)) : [];
