@@ -159,6 +159,11 @@ const API = {
 
         return media;
     },
+    getGenres: async (type = 'movie') => {
+        const targetType = type === 'anime' ? 'tv' : type;
+        const data = await API.fetchData(`/genre/${targetType}/list`);
+        return data && data.genres ? data.genres.map(g => ({ id: g.id, label: g.name })) : [];
+    },
 
     search: async (query, context = 'multi', page = 1) => {
         if (!query) return [];

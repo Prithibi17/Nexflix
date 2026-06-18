@@ -806,11 +806,35 @@ const UI = {
 
     // --- Filter Dashboard Methods ---
 
+    buildFilterDropdown: (id, title, options, type = 'checkbox') => {
+        let optionsHtml = options.map(opt => `
+            <label class="filter-option">
+                <input type="${type}" name="${id}" value="${opt.id}" onchange="UI.updateFilterState('${id}', '${opt.id}', this.checked, '${type}')">
+                <span class="checkmark"></span>
+                ${opt.label}
+            </label>
+        `).join('');
+
+        return `
+            <div class="custom-dropdown" id="dropdown-${id}">
+                <div class="dropdown-header" onclick="UI.toggleDropdown('${id}')">
+                    <span>${title}</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-panel">
+                    <div class="dropdown-grid" id="grid-${id}">
+                        ${optionsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
     renderFilterDashboard: async () => {
         // Setup state
         window.filterState = {
             query: '',
-            type: 'tv', // Default
+            type: 'movie', // Default
             genres: [],
             status: [],
             country: '',
@@ -822,40 +846,15 @@ const UI = {
 
         const appContent = document.getElementById('app-content');
         
-        const genreOptions = [
-            { id: 28, label: 'Action' }, { id: 12, label: 'Adventure' }, { id: 16, label: 'Animation' }, 
-            { id: 35, label: 'Comedy' }, { id: 80, label: 'Crime' }, { id: 99, label: 'Documentary' }, 
-            { id: 18, label: 'Drama' }, { id: 10751, label: 'Family' }, { id: 14, label: 'Fantasy' }, 
-            { id: 36, label: 'History' }, { id: 27, label: 'Horror' }, { id: 10402, label: 'Music' }, 
-            { id: 9648, label: 'Mystery' }, { id: 10749, label: 'Romance' }, { id: 878, label: 'Science Fiction' }, 
-            { id: 10770, label: 'TV Movie' }, { id: 53, label: 'Thriller' }, { id: 10752, label: 'War' }, 
-            { id: 37, label: 'Western' }
-        ];
-
-        // Custom Dropdown Builder
-        const buildDropdown = (id, title, options, type = 'checkbox') => {
-            let optionsHtml = options.map(opt => `
-                <label class="filter-option">
-                    <input type="${type}" name="${id}" value="${opt.id}" onchange="UI.updateFilterState('${id}', '${opt.id}', this.checked, '${type}')">
-                    <span class="checkmark"></span>
-                    ${opt.label}
-                </label>
-            `).join('');
-
-            return `
-                <div class="custom-dropdown" id="dropdown-${id}">
-                    <div class="dropdown-header" onclick="UI.toggleDropdown('${id}')">
-                        <span>${title}</span>
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                    <div class="dropdown-panel">
-                        <div class="dropdown-grid">
-                            ${optionsHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
+        // Fetch initial genres dynamically
+        const initialGenres = await API.getGenres(window.filterState.type);
+        
+        // Generate years from current year down to 1950
+        const currentYear = new Date().getFullYear();
+        const yearOptions = [];
+        for (let y = currentYear; y >= 1950; y--) {
+            yearOptions.push({ id: y.toString(), label: y.toString() });
+        }
 
         let html = `
             <div class="filter-dashboard-container">
@@ -863,46 +862,48 @@ const UI = {
                 
                 <div class="filter-controls-container">
                     <div class="filter-controls-row">
+                        ${UI.buildFilterDropdown('type', 'Select Type', [
+                            { id: 'movie', label: 'Movies' },
+                            { id: 'tv', label: 'TV Shows' },
+                            { id: 'anime', label: 'Anime' }
+                        ], 'radio')}
+                        
+                        <div id="genre-dropdown-container">
+                            ${UI.buildFilterDropdown('genres', 'Select genre', initialGenres)}
+                        </div>
+                        
                         <div class="filter-search-box">
                             <i class="fas fa-search"></i>
                             <input type="text" id="filter-search-input" placeholder="Search..." oninput="UI.updateFilterSearch(this.value)">
                         </div>
-                        ${buildDropdown('genres', 'Select genre', genreOptions)}
-                        ${buildDropdown('status', 'Select status', [
-                            { id: 0, label: 'Releasing' },
-                            { id: 3, label: 'Completed' }
-                        ])}
-                        ${buildDropdown('country', 'Select country', [
-                            { id: 'US', label: 'United States' },
-                            { id: 'JP', label: 'Japan' },
-                            { id: 'KR', label: 'South Korea' },
-                            { id: 'CN', label: 'China' },
-                            { id: 'GB', label: 'United Kingdom' }
-                        ], 'radio')}
-                        ${buildDropdown('language', 'Select language', [
-                            { id: 'en', label: 'English' },
-                            { id: 'ja', label: 'Japanese' },
-                            { id: 'ko', label: 'Korean' },
-                            { id: 'zh', label: 'Chinese' },
-                            { id: 'es', label: 'Spanish' },
-                            { id: 'fr', label: 'French' }
-                        ], 'radio')}
-                        ${buildDropdown('year', 'Select year', [
-                            { id: '2026', label: '2026' },
-                            { id: '2025', label: '2025' },
-                            { id: '2024', label: '2024' },
-                            { id: '2023', label: '2023' }
-                        ], 'radio')}
-                        ${buildDropdown('sort', 'Sort by', [
+                        
+                        ${UI.buildFilterDropdown('year', 'Select year', yearOptions, 'radio')}
+                        
+                        ${UI.buildFilterDropdown('sort', 'Sort by', [
                             { id: 'popularity.desc', label: 'Most Popular' },
                             { id: 'vote_average.desc', label: 'Highest Rated' },
                             { id: 'primary_release_date.desc', label: 'Recently Added' }
                         ], 'radio')}
                     </div>
                     <div class="filter-controls-row">
-                        ${buildDropdown('type', 'Select Type', [
-                            { id: 'tv', label: 'TV Shows' },
-                            { id: 'movie', label: 'Movies' }
+                        ${UI.buildFilterDropdown('status', 'Select status', [
+                            { id: 0, label: 'Releasing' },
+                            { id: 3, label: 'Completed' }
+                        ])}
+                        ${UI.buildFilterDropdown('country', 'Select country', [
+                            { id: 'US', label: 'United States' },
+                            { id: 'JP', label: 'Japan' },
+                            { id: 'KR', label: 'South Korea' },
+                            { id: 'CN', label: 'China' },
+                            { id: 'GB', label: 'United Kingdom' }
+                        ], 'radio')}
+                        ${UI.buildFilterDropdown('language', 'Select language', [
+                            { id: 'en', label: 'English' },
+                            { id: 'ja', label: 'Japanese' },
+                            { id: 'ko', label: 'Korean' },
+                            { id: 'zh', label: 'Chinese' },
+                            { id: 'es', label: 'Spanish' },
+                            { id: 'fr', label: 'French' }
                         ], 'radio')}
                         
                         <button class="filter-submit-btn" onclick="UI.triggerFilterSearch()"><i class="fas fa-filter"></i> Filter</button>
@@ -941,9 +942,19 @@ const UI = {
         el.classList.toggle('active');
     },
 
-    updateFilterState: (key, value, isChecked, type) => {
+    updateFilterState: async (key, value, isChecked, type) => {
         if (type === 'radio') {
             window.filterState[key] = value;
+            
+            // If the user changed the "Type" filter, dynamically re-fetch and re-render genres
+            if (key === 'type') {
+                window.filterState.genres = []; // Reset selected genres
+                const newGenres = await API.getGenres(value);
+                const genreContainer = document.getElementById('genre-dropdown-container');
+                if (genreContainer) {
+                    genreContainer.innerHTML = UI.buildFilterDropdown('genres', 'Select genre', newGenres);
+                }
+            }
         } else {
             // Checkbox logic
             if (!Array.isArray(window.filterState[key])) {
