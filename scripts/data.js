@@ -87,6 +87,11 @@ const API = {
         return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
+    getTopRatedMovies: async (page = 1) => {
+        const data = await API.fetchData(`/movie/top_rated?page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+    },
+
     getPopularSeries: async (page = 1) => {
         const data = await API.fetchData(`/tv/popular?page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];

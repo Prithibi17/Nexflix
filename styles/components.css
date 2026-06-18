@@ -964,3 +964,425 @@
     grid-template-columns: repeat(3, 1fr);
     min-width: 350px;
 }
+
+/* =========================================
+   Movies Dashboard Styles
+   ========================================= */
+
+.movies-dashboard {
+    background-color: #0b0c10;
+    min-height: 100vh;
+    padding-bottom: 50px;
+}
+
+/* Hero Carousel */
+.movies-hero-carousel {
+    position: relative;
+    width: 100%;
+    height: 70vh;
+    min-height: 600px;
+    overflow: hidden;
+}
+
+.movies-hero-slides-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.movies-hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center top;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+}
+
+.movies-hero-slide.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.movies-hero-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, #0b0c10 10%, rgba(11, 12, 16, 0.6) 50%, transparent 100%),
+                linear-gradient(to top, #0b0c10 0%, transparent 40%);
+}
+
+.movies-hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 5%;
+    max-width: 800px;
+}
+
+.movies-hero-tag {
+    display: inline-block;
+    background: rgba(255, 60, 91, 0.2);
+    color: #ff3c5b;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 60, 91, 0.4);
+}
+
+.movies-hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 15px;
+    line-height: 1.1;
+}
+
+.movies-hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.95rem;
+    color: #e5e5e5;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+.movies-hero-age {
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.movies-hero-desc {
+    font-size: 1rem;
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    max-width: 600px;
+}
+
+.movies-hero-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-play-now {
+    background: #ff3c5b;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+}
+
+.btn-play-now:hover {
+    transform: scale(1.05);
+}
+
+.btn-more-info {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btn-more-info:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.movies-hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s;
+}
+
+.movies-hero-nav:hover {
+    background: #ff3c5b;
+}
+
+.movies-hero-nav-left { left: 20px; }
+.movies-hero-nav-right { right: 20px; }
+
+.movies-hero-dots {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.movies-hero-dot {
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.movies-hero-dot.active {
+    background: #ff3c5b;
+    width: 24px;
+    border-radius: 4px;
+}
+
+/* Horizontal Rows */
+.movies-dashboard-content {
+    padding: 20px 5%;
+    margin-top: -80px;
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.movies-row-container {
+    width: 100%;
+}
+
+.movies-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.movies-row-title {
+    color: #fff;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.movies-row-title i {
+    color: #ff3c5b;
+}
+
+.movies-row-view-all {
+    color: #aaa;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.movies-row-view-all:hover {
+    color: #fff;
+}
+
+.movies-row-scroll {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 15px;
+    scrollbar-width: none; /* Firefox */
+}
+
+.movies-row-scroll::-webkit-scrollbar {
+    display: none; /* Chrome */
+}
+
+/* Popular Cards */
+.movie-card-popular {
+    position: relative;
+    min-width: 160px;
+    width: 160px;
+    aspect-ratio: 2/3;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.movie-card-popular:hover {
+    transform: scale(1.05);
+}
+
+.movie-card-popular img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.movie-card-popular-rating {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Top Rated Cards */
+.movie-card-toprated {
+    position: relative;
+    min-width: 180px;
+    width: 180px;
+    aspect-ratio: 2/3;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.movie-card-toprated:hover {
+    transform: scale(1.05);
+}
+
+.movie-card-toprated img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.movie-card-toprated-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #4caf50; /* Green badge */
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.movie-card-toprated-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 30px 10px 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+}
+
+.movie-card-toprated-overlay h4 {
+    color: #fff;
+    font-size: 0.9rem;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Continue Watching Cards */
+.movie-card-continue {
+    position: relative;
+    min-width: 260px;
+    width: 260px;
+    height: 146px; /* ~16:9 */
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #1c202a;
+    transition: transform 0.2s;
+}
+
+.movie-card-continue:hover {
+    transform: scale(1.05);
+}
+
+.movie-card-continue img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 20%; /* adjust poster crop */
+}
+
+.movie-card-continue-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 15px;
+}
+
+.continue-info h4 {
+    color: #fff;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    max-width: 160px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.continue-info p {
+    color: #aaa;
+    font-size: 0.75rem;
+}
+
+.continue-play-icon {
+    width: 30px;
+    height: 30px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.8rem;
+}
+
+.movie-card-continue:hover .continue-play-icon {
+    background: #fff;
+    color: #000;
+}
+
+.continue-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(255,255,255,0.2);
+}
+
+.continue-progress-fill {
+    height: 100%;
+    background: #ff0000;
+}

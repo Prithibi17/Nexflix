@@ -55,8 +55,7 @@ const App = {
                 await UI.renderHome();
             } 
             else if (hash === 'movies') {
-                App.state.activeGridFetcher = API.getPopularMovies;
-                await UI.renderGrid('Popular Movies', App.state.activeGridFetcher);
+                await UI.renderMoviesDashboard();
             }
             else if (hash === 'series') {
                 App.state.activeGridFetcher = API.getPopularSeries;

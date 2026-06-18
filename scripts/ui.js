@@ -627,6 +627,173 @@ const UI = {
         window.scrollTo(0, 0);
     },
 
+    // --- Movies Dashboard Methods ---
+    renderMoviesDashboard: async () => {
+        const appContent = document.getElementById('app-content');
+        appContent.innerHTML = `<div class="loader" style="margin: 100px auto;"></div>`;
+
+        try {
+            const [popular, topRated] = await Promise.all([
+                API.getPopularMovies(1),
+                API.getTopRatedMovies(1)
+            ]);
+
+            // Mock "Continue Watching" using a subset of popular movies
+            const continueWatching = popular.slice(10, 14);
+
+            // Hero Carousel Data
+            const heroMovies = popular.slice(0, 5);
+            window.moviesHeroData = heroMovies;
+            window.currentMoviesHeroIndex = 0;
+
+            const buildHeroHtml = () => {
+                return `
+                    <div class="movies-hero-carousel">
+                        <div class="movies-hero-slides-container" id="movies-hero-slides-container">
+                            ${heroMovies.map((movie, index) => {
+                                // For hero, try to use high-res image
+                                const bgImg = movie.poster.replace('w500', 'original');
+                                return `
+                                <div class="movies-hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}" style="background-image: url('${bgImg}');">
+                                    <div class="movies-hero-gradient"></div>
+                                    <div class="movies-hero-content">
+                                        <div class="movies-hero-tag"><i class="fas fa-fire"></i> #${index + 1} Trending</div>
+                                        <h1 class="movies-hero-title">${movie.title}</h1>
+                                        <div class="movies-hero-meta">
+                                            <span>${movie.year}</span>
+                                            <span><i class="fas fa-star" style="color:#ffc107;"></i> ${movie.rating}</span>
+                                            <span>${Math.floor(Math.random() * 2 + 1)}h ${Math.floor(Math.random() * 59)}m</span>
+                                            <span>Action, Fantasy, Adventure</span>
+                                            <span class="movies-hero-age">UA 16+</span>
+                                        </div>
+                                        <p class="movies-hero-desc">${movie.overview.substring(0, 200)}...</p>
+                                        <div class="movies-hero-buttons">
+                                            <button class="btn-play-now" onclick="window.location.hash='#movie/${movie.id}'"><i class="fas fa-play"></i> Play Now</button>
+                                            <button class="btn-more-info" onclick="window.location.hash='#movie/${movie.id}'"><i class="fas fa-info-circle"></i> More Info</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `}).join('')}
+                        </div>
+                        <div class="movies-hero-nav movies-hero-nav-left" onclick="UI.prevMoviesHero()"><i class="fas fa-chevron-left"></i></div>
+                        <div class="movies-hero-nav movies-hero-nav-right" onclick="UI.nextMoviesHero()"><i class="fas fa-chevron-right"></i></div>
+                        <div class="movies-hero-dots" id="movies-hero-dots">
+                            ${heroMovies.map((_, index) => `
+                                <div class="movies-hero-dot ${index === 0 ? 'active' : ''}" onclick="UI.setMoviesHero(${index})"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            };
+
+            const buildHorizontalRow = (title, items, type) => {
+                let cardsHtml = items.map(item => {
+                    if (type === 'popular') {
+                        return `
+                            <div class="movie-card-popular" onclick="window.location.hash='#movie/${item.id}'">
+                                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                                <div class="movie-card-popular-rating"><i class="fas fa-star" style="color:#ffc107;"></i> ${item.rating}</div>
+                            </div>
+                        `;
+                    } else if (type === 'toprated') {
+                        return `
+                            <div class="movie-card-toprated" onclick="window.location.hash='#movie/${item.id}'">
+                                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                                <div class="movie-card-toprated-badge">${item.rating}</div>
+                                <div class="movie-card-toprated-overlay">
+                                    <h4>${item.title}</h4>
+                                </div>
+                            </div>
+                        `;
+                    } else if (type === 'continue') {
+                        // Wide thumbnail mock using poster but zoomed/cropped via css
+                        return `
+                            <div class="movie-card-continue" onclick="window.location.hash='#movie/${item.id}'">
+                                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                                <div class="movie-card-continue-overlay">
+                                    <div class="continue-info">
+                                        <h4>${item.title}</h4>
+                                        <p>${Math.floor(Math.random() * 50) + 10}m left</p>
+                                    </div>
+                                    <div class="continue-play-icon"><i class="fas fa-play"></i></div>
+                                </div>
+                                <div class="continue-progress-bar">
+                                    <div class="continue-progress-fill" style="width: ${Math.floor(Math.random() * 80) + 10}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
+
+                return `
+                    <div class="movies-row-container">
+                        <div class="movies-row-header">
+                            <h3 class="movies-row-title"><i class="${type === 'continue' ? 'far fa-play-circle' : 'fas fa-th'}"></i> ${title}</h3>
+                            <span class="movies-row-view-all">View All</span>
+                        </div>
+                        <div class="movies-row-scroll">
+                            ${cardsHtml}
+                        </div>
+                    </div>
+                `;
+            };
+
+            let html = `
+                <div class="movies-dashboard">
+                    ${buildHeroHtml()}
+                    <div class="movies-dashboard-content">
+                        ${buildHorizontalRow('Popular Movies', popular.slice(0, 10), 'popular')}
+                        ${buildHorizontalRow('Top Rated', topRated.slice(0, 10), 'toprated')}
+                        ${buildHorizontalRow('Continue Watching', continueWatching, 'continue')}
+                    </div>
+                </div>
+            `;
+
+            appContent.innerHTML = html;
+            window.scrollTo(0, 0);
+
+            // Auto advance carousel
+            if (window.moviesHeroInterval) clearInterval(window.moviesHeroInterval);
+            window.moviesHeroInterval = setInterval(UI.nextMoviesHero, 5000);
+
+        } catch (error) {
+            console.error("Error rendering movies dashboard:", error);
+            appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">Failed to load movies.</h2>`;
+        }
+    },
+
+    setMoviesHero: (index) => {
+        window.currentMoviesHeroIndex = index;
+        const slides = document.querySelectorAll('.movies-hero-slide');
+        const dots = document.querySelectorAll('.movies-hero-dot');
+        if (!slides.length) return;
+
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d => d.classList.remove('active'));
+
+        slides[index].classList.add('active');
+        dots[index].classList.add('active');
+        
+        if (window.moviesHeroInterval) {
+            clearInterval(window.moviesHeroInterval);
+            window.moviesHeroInterval = setInterval(UI.nextMoviesHero, 5000);
+        }
+    },
+
+    nextMoviesHero: () => {
+        if (!window.moviesHeroData) return;
+        let next = window.currentMoviesHeroIndex + 1;
+        if (next >= window.moviesHeroData.length) next = 0;
+        UI.setMoviesHero(next);
+    },
+
+    prevMoviesHero: () => {
+        if (!window.moviesHeroData) return;
+        let prev = window.currentMoviesHeroIndex - 1;
+        if (prev < 0) prev = window.moviesHeroData.length - 1;
+        UI.setMoviesHero(prev);
+    },
+
     // --- Filter Dashboard Methods ---
 
     renderFilterDashboard: async () => {
