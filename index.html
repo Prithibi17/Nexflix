@@ -32,7 +32,11 @@
         </div>
         <div class="nav-right">
             <div class="nav-divider"></div>
-            <button class="nav-circle-btn search-btn" aria-label="Search"><i class="fas fa-search"></i></button>
+            <div class="nav-search-container" id="nav-search-container">
+                <i class="fas fa-search"></i>
+                <input type="text" id="nav-search-input" placeholder="Search...">
+                <div id="nav-search-dropdown" class="nav-search-dropdown"></div>
+            </div>
             <button class="nav-circle-btn" aria-label="Notifications"><i class="fas fa-bell"></i><span class="nav-badge">3</span></button>
             <div class="nav-profile-btn">
                 <img src="https://i.pravatar.cc/150?img=68" alt="User Avatar" class="avatar-img">
@@ -87,14 +91,6 @@
         </div>
     </footer>
 
-    <!-- Search Overlay -->
-    <div id="search-overlay" class="search-overlay">
-        <div class="search-container">
-            <button class="close-search icon-btn"><i class="fas fa-times"></i></button>
-            <input type="text" id="search-input" placeholder="Search for movies, shows, genres...">
-            <div id="search-results" class="search-results"></div>
-        </div>
-    </div>
 
     <!-- Scripts -->
     <script src="scripts/data.js"></script>

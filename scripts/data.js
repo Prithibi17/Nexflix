@@ -160,10 +160,27 @@ const API = {
         return media;
     },
 
-    search: async (query, page = 1) => {
+    search: async (query, context = 'multi', page = 1) => {
         if (!query) return [];
-        const data = await API.fetchData(`/search/multi?query=${encodeURIComponent(query)}&page=${page}`);
-        return data ? data.results.filter(item => item.media_type !== 'person').map(item => API.formatMedia(item, item.media_type)) : [];
+        let endpoint;
+        if (context === 'movie') endpoint = `/search/movie?query=${encodeURIComponent(query)}&page=${page}`;
+        else if (context === 'series' || context === 'anime') endpoint = `/search/tv?query=${encodeURIComponent(query)}&page=${page}`;
+        else endpoint = `/search/multi?query=${encodeURIComponent(query)}&page=${page}`;
+
+        const data = await API.fetchData(endpoint);
+        if (!data || !data.results) return [];
+        
+        let results = data.results.filter(item => item.media_type !== 'person');
+        
+        if (context === 'anime') {
+            // Filter TV results to animation genre from Asian countries for Anime
+            results = results.filter(item => 
+                item.genre_ids && item.genre_ids.includes(16) && 
+                item.origin_country && (item.origin_country.includes('JP') || item.origin_country.includes('KR') || item.origin_country.includes('CN'))
+            );
+        }
+        
+        return results.map(item => API.formatMedia(item, context === 'multi' ? (item.media_type || 'movie') : (context === 'movie' ? 'movie' : 'tv')));
     },
 
     getCollection: async (collectionId) => {

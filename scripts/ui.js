@@ -323,25 +323,21 @@ const UI = {
         if (loader) loader.style.display = show ? 'block' : 'none';
     },
 
-    renderSearchResults: (items) => {
-        const resultsContainer = document.getElementById('search-results');
+    renderNavSearchResults: (items, query, context) => {
+        const dropdown = document.getElementById('nav-search-dropdown');
         if (!items || items.length === 0) {
-            resultsContainer.innerHTML = '<p>No results found.</p>';
+            dropdown.innerHTML = `<div class="nav-search-no-results">No results for "${query}" in ${context}</div>`;
             return;
         }
 
-        resultsContainer.innerHTML = items.map(item => `
-            <div class="media-card" onclick="document.getElementById('search-overlay').classList.remove('active'); window.location.hash='#${item.type || 'movie'}/${item.id}'">
-                <div class="card-image-wrapper">
-                    <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
+        dropdown.innerHTML = items.map(item => `
+            <a href="#${item.type || 'movie'}/${item.id}" class="nav-search-result-item" onclick="document.getElementById('nav-search-dropdown').classList.remove('active')">
+                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                <div class="nav-search-result-info">
+                    <div class="nav-search-result-title">${item.title}</div>
+                    <div class="nav-search-result-meta">${item.year} • <i class="fas fa-star" style="color:#ffc107;"></i> ${item.rating}</div>
                 </div>
-                <div class="card-overlay">
-                    <h4 class="card-title">${item.title}</h4>
-                    <div class="card-meta">
-                        <span>${item.year}</span>
-                        <span><i class="fas fa-star rating"></i> ${item.rating}</span>
-                    </div>
-            </div>
+            </a>
         `).join('');
     },
 
@@ -1059,35 +1055,51 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// Search Overlay Logic
-const searchOverlay = document.getElementById('search-overlay');
-const searchInput = document.getElementById('search-input');
-let searchTimeout;
+// Navbar Contextual Search Logic
+const navSearchInput = document.getElementById('nav-search-input');
+const navSearchDropdown = document.getElementById('nav-search-dropdown');
+let navSearchTimeout;
 
-document.querySelector('.search-btn').addEventListener('click', () => {
-    searchOverlay.classList.add('active');
-    searchInput.focus();
-    document.body.style.overflow = 'hidden';
-});
+if (navSearchInput) {
+    navSearchInput.addEventListener('input', (e) => {
+        clearTimeout(navSearchTimeout);
+        const query = e.target.value.trim();
+        
+        if (query.length < 2) {
+            navSearchDropdown.classList.remove('active');
+            navSearchDropdown.innerHTML = '';
+            return;
+        }
+        
+        navSearchDropdown.classList.add('active');
+        navSearchDropdown.innerHTML = '<div class="nav-search-loader"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+        
+        navSearchTimeout = setTimeout(async () => {
+            // Determine Context
+            let context = 'multi';
+            const hash = window.location.hash.substring(1).split('/')[0];
+            
+            if (hash === 'movies') context = 'movie';
+            else if (hash === 'series') context = 'series';
+            else if (hash === 'anime') context = 'anime';
+            else context = 'multi'; // home or filter or others
+            
+            const results = await API.search(query, context);
+            UI.renderNavSearchResults(results, query, context === 'multi' ? 'All' : context);
+        }, 500);
+    });
 
-document.querySelector('.close-search').addEventListener('click', () => {
-    searchOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-});
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#nav-search-container')) {
+            navSearchDropdown.classList.remove('active');
+        }
+    });
 
-// Debounced Search Input
-searchInput.addEventListener('input', (e) => {
-    clearTimeout(searchTimeout);
-    const query = e.target.value.trim();
-    
-    if (query.length < 2) {
-        document.getElementById('search-results').innerHTML = '';
-        return;
-    }
-    
-    searchTimeout = setTimeout(async () => {
-        document.getElementById('search-results').innerHTML = '<div class="loader"></div>';
-        const results = await API.search(query);
-        UI.renderSearchResults(results);
-    }, 500);
-});
+    // Re-open dropdown when focusing input if there's text
+    navSearchInput.addEventListener('focus', () => {
+        if (navSearchInput.value.trim().length >= 2) {
+            navSearchDropdown.classList.add('active');
+        }
+    });
+}
