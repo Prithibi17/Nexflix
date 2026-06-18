@@ -30,6 +30,12 @@ const App = {
         App.state.activeGridFetcher = null;
         App.state.isLoadingMore = false;
 
+        // Clear rotating banner interval to prevent memory leaks or dual-rotation
+        if (window.heroIntervalId) {
+            clearInterval(window.heroIntervalId);
+            window.heroIntervalId = null;
+        }
+
         // Update active nav link (basic)
         navLinks.forEach(link => {
             link.classList.remove('active');

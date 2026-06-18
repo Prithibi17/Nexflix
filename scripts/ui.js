@@ -32,32 +32,9 @@ const UI = {
 
         // Use the first trending item as the Hero
         const heroData = trending[0];
-        // Fetch full details for the hero to get genres/runtime
         const hero = await API.getDetails(heroData.id, heroData.type) || heroData;
         
-        let html = `
-            <!-- Hero Section -->
-            <section class="hero" style="background-image: url('${hero.backdrop}');">
-                <div class="hero-content">
-                    <h1 class="hero-title">${hero.title}</h1>
-                    <div class="hero-meta">
-                        <span class="meta-item">${hero.year}</span>
-                        <span class="meta-item"><i class="fas fa-star rating"></i> ${hero.rating}</span>
-                        <span class="meta-item">${hero.runtime || 'N/A'}</span>
-                        <span class="meta-item">${hero.genres ? hero.genres.join(', ') : ''}</span>
-                    </div>
-                    <p class="hero-desc">${hero.description}</p>
-                    <div class="hero-actions">
-                        <button class="btn btn-primary" onclick="Player.play(${hero.id}, '${hero.type}')">
-                            <i class="fas fa-play"></i> Play Now
-                        </button>
-                        <a href="#movie/${hero.id}" class="btn btn-secondary">
-                            <i class="fas fa-info-circle"></i> More Info
-                        </a>
-                    </div>
-                </div>
-            </section>
-        `;
+        let html = UI.renderHeroBannerHtml(hero);
 
         html += UI.buildCarousel('Trending Now', trending.slice(1), 'trending'); // Skip first since it's hero
         html += UI.buildCarousel('Popular Movies', popularMovies.slice(0, 20), 'movies');
@@ -69,6 +46,83 @@ const UI = {
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
+        
+        // Setup dynamic rotation for Home
+        UI.setupHeroCarousel(trending);
+    },
+
+    renderHeroBannerHtml: (hero) => {
+        return `
+            <!-- Hero Section -->
+            <section class="hero" id="hero-banner" style="background-image: url('${hero.backdrop}'); transition: background-image 1s ease-in-out;">
+                <div class="hero-content">
+                    <h1 class="hero-title" id="hero-title">${hero.title}</h1>
+                    <div class="hero-meta" id="hero-meta">
+                        <span class="meta-item">${hero.year}</span>
+                        <span class="meta-item"><i class="fas fa-star rating"></i> ${hero.rating}</span>
+                        <span class="meta-item">${hero.runtime || 'N/A'}</span>
+                        <span class="meta-item">${hero.genres ? hero.genres.join(', ') : ''}</span>
+                    </div>
+                    <p class="hero-desc" id="hero-desc">${hero.description}</p>
+                    <div class="hero-actions" id="hero-actions">
+                        <button class="btn btn-primary" onclick="Player.play(${hero.id}, '${hero.type || 'movie'}')">
+                            <i class="fas fa-play"></i> Play Now
+                        </button>
+                        <a href="#${hero.type || 'movie'}/${hero.id}" class="btn btn-secondary">
+                            <i class="fas fa-info-circle"></i> More Info
+                        </a>
+                    </div>
+                </div>
+            </section>
+        `;
+    },
+
+    setupHeroCarousel: async (items) => {
+        if (!items || items.length === 0) return;
+        
+        let currentIndex = 0;
+        const bannerItems = items.slice(0, 5); // take top 5
+        
+        // Cache detailed info
+        const detailedItems = await Promise.all(bannerItems.map(async item => {
+            return await API.getDetails(item.id, item.type || 'movie') || item;
+        }));
+
+        if (window.heroIntervalId) clearInterval(window.heroIntervalId);
+
+        window.heroIntervalId = setInterval(() => {
+            currentIndex = (currentIndex + 1) % detailedItems.length;
+            const hero = detailedItems[currentIndex];
+            
+            const heroBanner = document.getElementById('hero-banner');
+            const heroTitle = document.getElementById('hero-title');
+            const heroMeta = document.getElementById('hero-meta');
+            const heroDesc = document.getElementById('hero-desc');
+            const heroActions = document.getElementById('hero-actions');
+            
+            if (!heroBanner) {
+                clearInterval(window.heroIntervalId);
+                return;
+            }
+
+            heroBanner.style.backgroundImage = `url('${hero.backdrop}')`;
+            heroTitle.innerText = hero.title;
+            heroMeta.innerHTML = `
+                <span class="meta-item">${hero.year}</span>
+                <span class="meta-item"><i class="fas fa-star rating"></i> ${hero.rating}</span>
+                <span class="meta-item">${hero.runtime || 'N/A'}</span>
+                <span class="meta-item">${hero.genres ? hero.genres.join(', ') : ''}</span>
+            `;
+            heroDesc.innerText = hero.description;
+            heroActions.innerHTML = `
+                <button class="btn btn-primary" onclick="Player.play(${hero.id}, '${hero.type || 'movie'}')">
+                    <i class="fas fa-play"></i> Play Now
+                </button>
+                <a href="#${hero.type || 'movie'}/${hero.id}" class="btn btn-secondary">
+                    <i class="fas fa-info-circle"></i> More Info
+                </a>
+            `;
+        }, 10000); // 10 seconds
     },
 
     buildCarousel: (title, items, viewAllRoute = '') => {
@@ -230,8 +284,16 @@ const UI = {
         
         let cards = items.map(item => UI.createCardHTML(item)).join('');
         
+        let heroHtml = '';
+        if (items.length > 0) {
+            const heroData = items[0];
+            const hero = await API.getDetails(heroData.id, heroData.type || 'movie') || heroData;
+            heroHtml = UI.renderHeroBannerHtml(hero);
+        }
+        
         appContent.innerHTML = `
-            <div class="section-padding" style="padding-top: 100px;">
+            ${heroHtml}
+            <div class="section-padding" style="padding-top: ${heroHtml ? '40px' : '100px'};">
                 <h2 style="margin-bottom: var(--spacing-lg);">${title}</h2>
                 <div id="grid-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-md);">
                     ${cards}
@@ -242,6 +304,10 @@ const UI = {
             </div>
         `;
         window.scrollTo(0, 0);
+        
+        if (items.length > 0) {
+            UI.setupHeroCarousel(items);
+        }
     },
 
     appendGridItems: (items) => {

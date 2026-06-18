@@ -53,7 +53,8 @@ const API = {
     },
 
     getAnime: async (page = 1) => {
-        const data = await API.fetchData(`/discover/tv?with_genres=16&page=${page}`);
+        // Strict filtering for Japanese, Korean, or Chinese animation
+        const data = await API.fetchData(`/discover/tv?with_genres=16&with_original_language=ja|ko|zh&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
