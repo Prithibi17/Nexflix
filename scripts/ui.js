@@ -343,7 +343,170 @@ const UI = {
                     </div>
                 </div>
             </div>
+        }).join('');
+    },
+
+    // --- Anime Dashboard Specific Rendering ---
+
+    buildNumberedCarousel: (title, items) => {
+        if (!items || items.length === 0) return '';
+        let cards = items.map((item, index) => {
+            const num = (index + 1).toString().padStart(2, '0');
+            return `
+                <div class="media-card numbered-card" data-number="${num}" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                    <div class="card-image-wrapper">
+                        <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
+                    </div>
+                    <div class="card-overlay">
+                        <h4 class="card-title">${item.title}</h4>
+                        <div class="card-meta">
+                            <span>${item.year}</span>
+                            <span><i class="fas fa-star rating"></i> ${item.rating}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <section class="content-row" style="margin-top: 2rem;">
+                <div class="row-header">
+                    <h3 class="row-title" style="color: var(--accent-color);">${title}</h3>
+                </div>
+                <div class="carousel">
+                    ${cards}
+                </div>
+            </section>
+        `;
+    },
+
+    buildCompactList: (title, items) => {
+        if (!items || items.length === 0) return '';
+        let listHtml = items.slice(0, 5).map(item => `
+            <div class="compact-list-item" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
+                <div class="compact-info">
+                    <div class="compact-title">${item.title}</div>
+                    <div class="compact-meta">TV • ${item.year} • <i class="fas fa-star rating" style="font-size: 0.7rem;"></i> ${item.rating}</div>
+                </div>
+            </div>
         `).join('');
+
+        return `
+            <div class="compact-list-col">
+                <h3>${title}</h3>
+                ${listHtml}
+            </div>
+        `;
+    },
+
+    buildGenreCloud: () => {
+        const genres = ['Action', 'Adventure', 'Cars', 'Comedy', 'Dementia', 'Demons', 'Drama', 'Ecchi', 'Fantasy', 'Game', 'Harem', 'Historical', 'Horror', 'Josei', 'Kids', 'Magic', 'Martial Arts', 'Mecha', 'Military', 'Music', 'Mystery', 'Parody', 'Police', 'Psychological'];
+        return `
+            <div>
+                <h3 style="color: var(--accent-color); margin-bottom: 1rem;">Genres</h3>
+                <div class="genre-cloud" style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
+                    ${genres.map(g => `<span class="genre-tag">${g}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    },
+
+    buildMostViewedList: (items) => {
+        if (!items || items.length === 0) return '';
+        let listHtml = items.slice(0, 10).map((item, index) => {
+            const num = (index + 1).toString().padStart(2, '0');
+            return `
+                <div class="most-viewed-item" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                    <div class="most-viewed-rank">${num}</div>
+                    <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
+                    <div class="compact-info">
+                        <div class="compact-title">${item.title}</div>
+                        <div class="compact-meta"><i class="fas fa-eye"></i> ${Math.floor(Math.random() * 900) + 100}k • <i class="fas fa-heart" style="color:var(--accent-color);"></i> ${Math.floor(Math.random() * 50) + 10}k</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Most Viewed</h3>
+                <div style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px;">
+                    ${listHtml}
+                </div>
+            </div>
+        `;
+    },
+
+    renderAnimeDashboard: async () => {
+        UI.showLoading();
+        const appContent = document.getElementById('app-content');
+        
+        // Fetch massive dataset
+        const [trending, recent, popular, topRated, completed] = await Promise.all([
+            API.getAnimeTrending(),
+            API.getAnimeRecent(),
+            API.getAnimePopular(),
+            API.getAnimeTopRated(),
+            API.getAnimeCompleted()
+        ]);
+
+        if (!trending || trending.length === 0) {
+            appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">Failed to load Anime data.</h2>`;
+            return;
+        }
+
+        // Hero Spotlight
+        const heroData = trending[0];
+        const hero = await API.getDetails(heroData.id, heroData.type || 'tv') || heroData;
+        let html = UI.renderHeroBannerHtml(hero);
+
+        // Trending Row (Numbered)
+        html += UI.buildNumberedCarousel('Trending', trending.slice(1, 20));
+
+        // 4-Column Quick Lists
+        html += `
+            <section class="four-columns">
+                ${UI.buildCompactList('New Added', recent)}
+                ${UI.buildCompactList('Most Popular', popular)}
+                ${UI.buildCompactList('Most Favorite', topRated)}
+                ${UI.buildCompactList('Completed', completed)}
+            </section>
+        `;
+
+        // Main Content / Sidebar Split
+        html += `
+            <section class="dashboard-layout">
+                <div class="dashboard-main">
+                    <h3 style="color: var(--accent-color); margin-bottom: 1rem;">Recently Updated</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--spacing-md); margin-bottom: 3rem;">
+                        ${recent.slice(5, 17).map(item => UI.createCardHTML(item)).join('')}
+                    </div>
+                    
+                    <h3 style="margin-bottom: 1rem;">Estimated Schedule</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 2rem;">
+                        <button class="btn btn-primary">Sun</button>
+                        <button class="btn btn-secondary">Mon</button>
+                        <button class="btn btn-secondary">Tue</button>
+                        <button class="btn btn-secondary">Wed</button>
+                        <button class="btn btn-secondary">Thu</button>
+                        <button class="btn btn-secondary">Fri</button>
+                        <button class="btn btn-secondary">Sat</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--spacing-md);">
+                        ${trending.slice(15, 20).map(item => UI.createCardHTML(item)).join('')}
+                    </div>
+                </div>
+                <div class="dashboard-sidebar">
+                    ${UI.buildGenreCloud()}
+                    ${UI.buildMostViewedList(popular)}
+                </div>
+            </section>
+        `;
+
+        appContent.innerHTML = html;
+        window.scrollTo(0, 0);
+        UI.setupHeroCarousel(trending);
     }
 };
 

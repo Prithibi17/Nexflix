@@ -3,6 +3,7 @@
 const TMDB_KEY = '74a7bce84da256a7bfece5ce20fc6119';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_BASE_URL = 'https://image.tmdb.org/t/p/';
+const ANIME_QUERY = 'with_genres=16&with_original_language=ja|ko|zh';
 
 const API = {
     // Helper to fetch and parse JSON
@@ -47,20 +48,48 @@ const API = {
         return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
     },
 
-    getPopularSeries: async (page = 1) => {
-        const data = await API.fetchData(`/tv/popular?page=${page}`);
+    getAnime: async (page = 1) => {
+        // Generic discover anime (maps to popular usually)
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
-    getAnime: async (page = 1) => {
-        // Strict filtering for Japanese, Korean, or Chinese animation
-        const data = await API.fetchData(`/discover/tv?with_genres=16&with_original_language=ja|ko|zh&page=${page}`);
+    getAnimeTrending: async (page = 1) => {
+        // TMDB doesn't have a strict trending by genre, so we use discover sorted by popularity for "trending" anime
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=popularity.desc&page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getAnimeRecent: async (page = 1) => {
+        // Recently added/updated
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=first_air_date.desc&page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getAnimePopular: async (page = 1) => {
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=vote_count.desc&page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getAnimeTopRated: async (page = 1) => {
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=vote_average.desc&vote_count.gte=200&page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+    },
+
+    getAnimeCompleted: async (page = 1) => {
+        // status 3 = Ended
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&with_status=3&sort_by=popularity.desc&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
     getActionMovies: async (page = 1) => {
         const data = await API.fetchData(`/discover/movie?with_genres=28&page=${page}`);
         return data ? data.results.map(item => API.formatMedia(item, 'movie')) : [];
+    },
+
+    getPopularSeries: async (page = 1) => {
+        const data = await API.fetchData(`/tv/popular?page=${page}`);
+        return data ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
     getComedyMovies: async (page = 1) => {

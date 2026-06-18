@@ -79,8 +79,7 @@ const App = {
                 await UI.renderGrid('Sci-Fi Movies', App.state.activeGridFetcher);
             }
             else if (hash === 'anime') {
-                App.state.activeGridFetcher = API.getAnime;
-                await UI.renderGrid('Anime', App.state.activeGridFetcher);
+                await UI.renderAnimeDashboard();
             }
             else if (hash.startsWith('movie/') || hash.startsWith('tv/')) {
                 const [type, id] = hash.split('/');
