@@ -132,5 +132,10 @@ const API = {
             still: ep.still_path ? `${IMG_BASE_URL}w500${ep.still_path}` : 'https://via.placeholder.com/500x281?text=No+Image',
             runtime: ep.runtime ? `${ep.runtime}m` : ''
         }));
+    },
+
+    getRecommendations: async (id, type = 'movie', page = 1) => {
+        const data = await API.fetchData(`/${type}/${id}/recommendations?page=${page}`);
+        return data && data.results ? data.results.map(item => API.formatMedia(item, type)) : [];
     }
 };

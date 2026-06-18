@@ -168,9 +168,22 @@ const UI = {
             }
         }
 
-        // Add recommendations (just use trending for now to simulate)
-        const trending = await API.getTrending();
-        html += extraHtml + UI.buildCarousel('More Like This', trending);
+        // Fetch recommendations (fetch 2 pages to make the horizontal scroll longer)
+        const [recPage1, recPage2] = await Promise.all([
+            API.getRecommendations(id, type, 1),
+            API.getRecommendations(id, type, 2)
+        ]);
+        
+        let recommendations = [];
+        if (recPage1) recommendations = recommendations.concat(recPage1);
+        if (recPage2) recommendations = recommendations.concat(recPage2);
+        
+        // Fallback to trending if no recommendations exist for this specific title
+        if (recommendations.length === 0) {
+            recommendations = await API.getTrending();
+        }
+
+        html += extraHtml + UI.buildCarousel('More Like This', recommendations);
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
