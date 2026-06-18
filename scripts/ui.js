@@ -1078,9 +1078,10 @@ const UI = {
         appContent.innerHTML = html;
         
         // Trigger initial type setup to inject genres and specific filters
-        await UI.setupTypeSpecificFilters('movie');        
+        await UI.setupTypeSpecificFilters(window.filterState.type || 'movie');        
         
         // Initial UI update for headers and chips
+        UI.syncFilterDOMToState();
         UI.updateFilterUI();
 
         // Close dropdowns when clicking outside
@@ -1095,6 +1096,26 @@ const UI = {
 
         // Initial load
         UI.triggerFilterSearch();
+    },
+
+    syncFilterDOMToState: () => {
+        if (!window.filterState) return;
+        
+        document.querySelectorAll('.filter-dashboard-container input').forEach(input => {
+            input.checked = false;
+        });
+
+        Object.entries(window.filterState).forEach(([key, val]) => {
+            if (Array.isArray(val)) {
+                val.forEach(v => {
+                    const input = document.querySelector(`.filter-dashboard-container input[name="${key}"][value="${v}"]`);
+                    if (input) input.checked = true;
+                });
+            } else if (val !== '') {
+                const input = document.querySelector(`.filter-dashboard-container input[name="${key}"][value="${val}"]`);
+                if (input) input.checked = true;
+            }
+        });
     },
 
     toggleDropdown: (id) => {

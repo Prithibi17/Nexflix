@@ -283,7 +283,11 @@ const API = {
             }
 
             if (params.sort) {
-                queryParams.push(`sort_by=${params.sort}`);
+                let sortVal = params.sort;
+                if (targetType === 'tv' && sortVal === 'primary_release_date.desc') {
+                    sortVal = 'first_air_date.desc';
+                }
+                queryParams.push(`sort_by=${sortVal}`);
             } else {
                 queryParams.push(`sort_by=popularity.desc`);
             }
