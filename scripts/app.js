@@ -46,7 +46,10 @@ const App = {
 
         // Close any active player or search
         Player.close();
-        document.getElementById('search-overlay').classList.remove('active');
+        const navSearchDropdown = document.getElementById('nav-search-dropdown');
+        if (navSearchDropdown) {
+            navSearchDropdown.classList.remove('active');
+        }
         document.body.style.overflow = '';
 
         // Route matching
