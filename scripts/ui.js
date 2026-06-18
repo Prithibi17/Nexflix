@@ -59,27 +59,30 @@ const UI = {
             </section>
         `;
 
-        html += UI.buildCarousel('Trending Now', trending.slice(1)); // Skip first since it's hero
-        html += UI.buildCarousel('Popular Movies', popularMovies);
-        html += UI.buildCarousel('Popular TV Shows', popularSeries);
-        html += UI.buildCarousel('Action', action);
-        html += UI.buildCarousel('Comedy', comedy);
-        html += UI.buildCarousel('Sci-Fi', scifi);
-        html += UI.buildCarousel('Anime', anime);
+        html += UI.buildCarousel('Trending Now', trending.slice(1), 'trending'); // Skip first since it's hero
+        html += UI.buildCarousel('Popular Movies', popularMovies.slice(0, 20), 'movies');
+        html += UI.buildCarousel('Popular TV Shows', popularSeries.slice(0, 20), 'series');
+        html += UI.buildCarousel('Action', action, 'action');
+        html += UI.buildCarousel('Comedy', comedy, 'comedy');
+        html += UI.buildCarousel('Sci-Fi', scifi, 'scifi');
+        html += UI.buildCarousel('Anime', anime, 'anime');
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
     },
 
-    buildCarousel: (title, items) => {
+    buildCarousel: (title, items, viewAllRoute = '') => {
         if (!items || items.length === 0) return '';
         
         let cards = items.map(item => UI.createCardHTML(item)).join('');
+        
+        let viewAllHtml = viewAllRoute ? `<a href="#${viewAllRoute}" class="view-all">View All</a>` : '';
 
         return `
             <section class="content-row">
                 <div class="row-header">
                     <h3 class="row-title">${title}</h3>
+                    ${viewAllHtml}
                 </div>
                 <div class="carousel">
                     ${cards}
