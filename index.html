@@ -17,24 +17,25 @@
 </head>
 <body>
     <!-- Top Navigation -->
-    <header class="navbar" id="navbar">
+    <header class="navbar-pill" id="navbar">
         <div class="nav-left">
             <a href="#home" class="logo">Nex<span>flix</span></a>
         </div>
         <div class="nav-center">
             <nav class="nav-links">
-                <a href="#home" class="nav-link active">Home</a>
-                <a href="#movies" class="nav-link">Movies</a>
-                <a href="#series" class="nav-link">TV Shows</a>
-                <a href="#anime" class="nav-link">Anime</a>
-                <a href="#filter" class="nav-link">Filter</a>
+                <a href="#home" class="nav-link active"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="#movies" class="nav-link"><i class="fas fa-film"></i><span>Movies</span></a>
+                <a href="#series" class="nav-link"><i class="fas fa-tv"></i><span>TV Shows</span></a>
+                <a href="#anime" class="nav-link"><i class="fas fa-user-ninja"></i><span>Anime</span></a>
+                <a href="#filter" class="nav-link"><i class="fas fa-filter"></i><span>Filter</span></a>
             </nav>
         </div>
         <div class="nav-right">
-            <button class="icon-btn search-btn" aria-label="Search"><i class="fas fa-search"></i></button>
-            <button class="icon-btn" aria-label="Notifications"><i class="fas fa-bell"></i></button>
-            <div class="user-profile">
-                <img src="https://i.pravatar.cc/150?img=68" alt="User Avatar" class="avatar">
+            <div class="nav-divider"></div>
+            <button class="nav-circle-btn search-btn" aria-label="Search"><i class="fas fa-search"></i></button>
+            <button class="nav-circle-btn" aria-label="Notifications"><i class="fas fa-bell"></i><span class="nav-badge">3</span></button>
+            <div class="nav-profile-btn">
+                <img src="https://i.pravatar.cc/150?img=68" alt="User Avatar" class="avatar-img">
             </div>
         </div>
     </header>
