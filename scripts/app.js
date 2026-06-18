@@ -11,7 +11,7 @@ const App = {
         }
     },
 
-    handleRoute: () => {
+    handleRoute: async () => {
         const hash = window.location.hash.substring(1);
         const navLinks = document.querySelectorAll('.nav-link');
         
@@ -29,26 +29,31 @@ const App = {
         document.body.style.overflow = '';
 
         // Route matching
-        if (hash === 'home' || hash === '') {
-            UI.renderHome();
-        } 
-        else if (hash === 'movies') {
-            UI.renderGrid('Movies', [...Nexflix_DATA.popular_movies, ...Nexflix_DATA.trending.filter(m => m.type==='movie')]);
-        }
-        else if (hash === 'series') {
-            UI.renderGrid('TV Shows', Nexflix_DATA.popular_series);
-        }
-        else if (hash === 'categories' || hash === 'mylist') {
-            // Reusing Grid for demo
-            UI.renderGrid(hash === 'mylist' ? 'My List' : 'Categories', Nexflix_DATA.trending);
-        }
-        else if (hash.startsWith('movie/') || hash.startsWith('tv/')) {
-            const [type, id] = hash.split('/');
-            UI.renderDetail(id, type);
-        }
-        else {
-            // Fallback
-            UI.renderHome();
+        try {
+            if (hash === 'home' || hash === '') {
+                await UI.renderHome();
+            } 
+            else if (hash === 'movies') {
+                await UI.renderGrid('Popular Movies', API.getPopularMovies);
+            }
+            else if (hash === 'series') {
+                await UI.renderGrid('Popular TV Shows', API.getPopularSeries);
+            }
+            else if (hash === 'categories' || hash === 'mylist') {
+                // Reusing Grid for demo purposes
+                await UI.renderGrid(hash === 'mylist' ? 'My List' : 'Trending Now', API.getTrending);
+            }
+            else if (hash.startsWith('movie/') || hash.startsWith('tv/')) {
+                const [type, id] = hash.split('/');
+                await UI.renderDetail(id, type);
+            }
+            else {
+                // Fallback
+                await UI.renderHome();
+            }
+        } catch (error) {
+            console.error("Routing Error:", error);
+            document.getElementById('app-content').innerHTML = `<h2 style="text-align:center; padding: 100px;">An error occurred while loading this page.</h2>`;
         }
     }
 };

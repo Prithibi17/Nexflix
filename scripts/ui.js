@@ -1,9 +1,35 @@
-// ui.js - DOM manipulation and rendering functions
+// ui.js - DOM manipulation and rendering functions with async API integration
 
 const UI = {
-    renderHome: () => {
+    showLoading: () => {
         const appContent = document.getElementById('app-content');
-        const hero = Nexflix_DATA.hero;
+        appContent.innerHTML = `
+            <div style="display: flex; justify-content: center; align-items: center; height: 70vh;">
+                <div class="loader"></div>
+            </div>
+        `;
+    },
+
+    renderHome: async () => {
+        UI.showLoading();
+        const appContent = document.getElementById('app-content');
+        
+        // Fetch data concurrently
+        const [trending, popularMovies, popularSeries] = await Promise.all([
+            API.getTrending(),
+            API.getPopularMovies(),
+            API.getPopularSeries()
+        ]);
+
+        if (!trending || trending.length === 0) {
+            appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">Failed to load data.</h2>`;
+            return;
+        }
+
+        // Use the first trending item as the Hero
+        const heroData = trending[0];
+        // Fetch full details for the hero to get genres/runtime
+        const hero = await API.getDetails(heroData.id, heroData.type) || heroData;
         
         let html = `
             <!-- Hero Section -->
@@ -13,8 +39,8 @@ const UI = {
                     <div class="hero-meta">
                         <span class="meta-item">${hero.year}</span>
                         <span class="meta-item"><i class="fas fa-star rating"></i> ${hero.rating}</span>
-                        <span class="meta-item">${hero.runtime}</span>
-                        <span class="meta-item">${hero.genres.join(', ')}</span>
+                        <span class="meta-item">${hero.runtime || 'N/A'}</span>
+                        <span class="meta-item">${hero.genres ? hero.genres.join(', ') : ''}</span>
                     </div>
                     <p class="hero-desc">${hero.description}</p>
                     <div class="hero-actions">
@@ -29,15 +55,17 @@ const UI = {
             </section>
         `;
 
-        html += UI.buildCarousel('Trending Now', Nexflix_DATA.trending);
-        html += UI.buildCarousel('Popular Movies', Nexflix_DATA.popular_movies);
-        html += UI.buildCarousel('Popular TV Shows', Nexflix_DATA.popular_series);
+        html += UI.buildCarousel('Trending Now', trending.slice(1)); // Skip first since it's hero
+        html += UI.buildCarousel('Popular Movies', popularMovies);
+        html += UI.buildCarousel('Popular TV Shows', popularSeries);
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
     },
 
     buildCarousel: (title, items) => {
+        if (!items || items.length === 0) return '';
+        
         let cards = items.map(item => `
             <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
                 <div class="card-image-wrapper">
@@ -66,9 +94,15 @@ const UI = {
         `;
     },
 
-    renderDetail: (id, type) => {
+    renderDetail: async (id, type) => {
+        UI.showLoading();
         const appContent = document.getElementById('app-content');
-        const media = getMediaDetails(id, type);
+        const media = await API.getDetails(id, type);
+
+        if (!media) {
+            appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">Media not found.</h2>`;
+            return;
+        }
 
         let html = `
             <section class="detail-hero" style="background-image: url('${media.backdrop}');">
@@ -105,15 +139,24 @@ const UI = {
             <div style="padding-top: 4rem;"></div>
         `;
         
-        // Add recommendations
-        html += UI.buildCarousel('More Like This', Nexflix_DATA.trending.slice().reverse());
+        // Add recommendations (just use trending for now to simulate)
+        const trending = await API.getTrending();
+        html += UI.buildCarousel('More Like This', trending);
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
     },
     
-    renderGrid: (title, items) => {
+    renderGrid: async (title, fetchFunction) => {
+        UI.showLoading();
         const appContent = document.getElementById('app-content');
+        
+        const items = await fetchFunction();
+        
+        if (!items || items.length === 0) {
+            appContent.innerHTML = `<h2 style="text-align:center; padding: 100px;">No items found.</h2>`;
+            return;
+        }
         
         let cards = items.map(item => `
             <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
@@ -139,6 +182,29 @@ const UI = {
             </div>
         `;
         window.scrollTo(0, 0);
+    },
+
+    renderSearchResults: (items) => {
+        const resultsContainer = document.getElementById('search-results');
+        if (!items || items.length === 0) {
+            resultsContainer.innerHTML = '<p>No results found.</p>';
+            return;
+        }
+
+        resultsContainer.innerHTML = items.map(item => `
+            <div class="media-card" onclick="document.getElementById('search-overlay').classList.remove('active'); window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                <div class="card-image-wrapper">
+                    <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
+                </div>
+                <div class="card-overlay">
+                    <h4 class="card-title">${item.title}</h4>
+                    <div class="card-meta">
+                        <span>${item.year}</span>
+                        <span><i class="fas fa-star rating"></i> ${item.rating}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
     }
 };
 
@@ -153,14 +219,34 @@ window.addEventListener('scroll', () => {
 });
 
 // Search Overlay Logic
+const searchOverlay = document.getElementById('search-overlay');
+const searchInput = document.getElementById('search-input');
+let searchTimeout;
+
 document.querySelector('.search-btn').addEventListener('click', () => {
-    const overlay = document.getElementById('search-overlay');
-    overlay.classList.add('active');
-    document.getElementById('search-input').focus();
+    searchOverlay.classList.add('active');
+    searchInput.focus();
     document.body.style.overflow = 'hidden';
 });
 
 document.querySelector('.close-search').addEventListener('click', () => {
-    document.getElementById('search-overlay').classList.remove('active');
+    searchOverlay.classList.remove('active');
     document.body.style.overflow = '';
+});
+
+// Debounced Search Input
+searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    const query = e.target.value.trim();
+    
+    if (query.length < 2) {
+        document.getElementById('search-results').innerHTML = '';
+        return;
+    }
+    
+    searchTimeout = setTimeout(async () => {
+        document.getElementById('search-results').innerHTML = '<div class="loader"></div>';
+        const results = await API.search(query);
+        UI.renderSearchResults(results);
+    }, 500);
 });
