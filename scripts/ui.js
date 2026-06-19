@@ -668,18 +668,25 @@ const UI = {
                     <div class="dashboard-grid" style="margin-bottom: 3rem;">
                         ${recent.slice(0, 15).map(item => {
                             let timeString = 'Today';
-                            if (item.latest_episode_date) {
-                                const diffMs = new Date() - new Date(item.latest_episode_date);
-                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-                                if (diffDays === 0) {
-                                    // Calculate pseudo-random hours ago based on id to simulate real-time
-                                    const hours = (item.id % 12) + 1;
-                                    timeString = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                            if (item.exact_release_time) {
+                                const diffMs = new Date() - new Date(item.exact_release_time);
+                                const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                                const diffDays = Math.floor(diffHours / 24);
+                                
+                                if (diffHours <= 0) {
+                                    timeString = 'Just now';
+                                } else if (diffHours < 24) {
+                                    timeString = `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
                                 } else if (diffDays === 1) {
                                     timeString = '1 day ago';
                                 } else {
                                     timeString = `${diffDays} days ago`;
                                 }
+                            } else if (item.latest_episode_date) {
+                                const diffMs = new Date() - new Date(item.latest_episode_date);
+                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                if (diffDays === 1) timeString = '1 day ago';
+                                else if (diffDays > 1) timeString = `${diffDays} days ago`;
                             }
                             const epNum = item.latest_episode ? item.latest_episode : (Math.floor(Math.random()*24)+1);
                             return `
