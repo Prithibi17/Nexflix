@@ -348,6 +348,42 @@ const API = {
         }));
     },
 
+    getAllEpisodes: async (tvId, seasonsArray) => {
+        const results = [];
+        const validSeasons = seasonsArray.filter(s => s.season_number > 0);
+        
+        const chunkArray = (arr, size) => arr.length ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)] : [];
+        const chunks = chunkArray(validSeasons, 5);
+        
+        for (const chunk of chunks) {
+            const promises = chunk.map(async (s) => {
+                const data = await API.fetchData(`/tv/${tvId}/season/${s.season_number}`);
+                return data && data.episodes ? data.episodes : [];
+            });
+            const chunkResults = await Promise.all(promises);
+            chunkResults.forEach(eps => results.push(...eps));
+        }
+        
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        
+        let globalEpNum = 1;
+        return results
+            .filter(ep => {
+                if (!ep.air_date) return false;
+                const airDate = new Date(ep.air_date);
+                return airDate <= today;
+            })
+            .map((ep) => ({
+                id: ep.id,
+                episode_number: globalEpNum++,
+                title: ep.name,
+                overview: ep.overview,
+                still: ep.still_path ? `${IMG_BASE_URL}w500${ep.still_path}` : 'https://via.placeholder.com/500x281?text=No+Image',
+                runtime: ep.runtime ? `${ep.runtime}m` : ''
+            }));
+    },
+
     getRelatedAnimeShows: async (title, currentId) => {
         // Strip out subtitles (e.g., "Sword Art Online: Alicization" -> "Sword Art Online")
         const baseTitle = title.split(':')[0].split('-')[0].trim();

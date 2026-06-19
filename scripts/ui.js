@@ -255,14 +255,7 @@ const UI = {
         window.scrollTo(0, 0);
 
         if (type === 'tv' && media.seasons && media.seasons.length > 0) {
-            let targetSeasonNum = 1;
-            if (media.next_episode_to_air) targetSeasonNum = media.next_episode_to_air.season_number;
-            else if (media.last_episode_to_air) targetSeasonNum = media.last_episode_to_air.season_number;
-            else {
-                const valid = media.seasons.filter(s => s.season_number > 0);
-                if (valid.length > 0) targetSeasonNum = valid[valid.length - 1].season_number;
-            }
-            UI.loadSeasonEpisodes(id, targetSeasonNum);
+            UI.loadSeasonEpisodes(id, media.seasons);
         }
     },
 
@@ -291,11 +284,16 @@ const UI = {
         }
     },
 
-    loadSeasonEpisodes: async (tvId, seasonNum) => {
+    loadSeasonEpisodes: async (tvId, seasonsData) => {
         const container = document.getElementById('episodes-container');
         if (container) container.innerHTML = '<div class="loader" style="margin: 20px auto;"></div>';
         
-        const episodes = await API.getEpisodes(tvId, seasonNum);
+        let episodes = [];
+        if (Array.isArray(seasonsData)) {
+            episodes = await API.getAllEpisodes(tvId, seasonsData);
+        } else {
+            episodes = await API.getEpisodes(tvId, seasonsData);
+        }
         window.currentSeasonEpisodes = episodes;
         
         const rangeSelector = document.getElementById('episode-range-selector');
