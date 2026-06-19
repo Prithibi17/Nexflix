@@ -21,6 +21,17 @@ const App = {
         }
     },
 
+    navigate: (route, params = {}) => {
+        let hash = route;
+        if (route === 'details') {
+            hash = `${params.type}/${params.id}`;
+            if (params.type === 'tv' && params.season > 1) {
+                hash += `?s=${params.season}`;
+            }
+        }
+        window.location.hash = hash;
+    },
+
     handleRoute: async () => {
         const hash = window.location.hash.substring(1);
         const navLinks = document.querySelectorAll('.nav-link');
@@ -86,8 +97,11 @@ const App = {
                 await UI.renderAnimeDashboard();
             }
             else if (hash.startsWith('movie/') || hash.startsWith('tv/')) {
-                const [type, id] = hash.split('/');
-                await UI.renderDetail(id, type);
+                const [path, queryStr] = hash.split('?');
+                const [type, id] = path.split('/');
+                const params = new URLSearchParams(queryStr || '');
+                const targetSeason = params.get('s');
+                await UI.renderDetail(id, type, targetSeason);
             }
             else {
                 // Fallback

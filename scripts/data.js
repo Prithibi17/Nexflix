@@ -83,6 +83,16 @@ const API = {
                 }
 
                 if (tmdbMatch) {
+                    let guessedSeason = 1;
+                    const engTitle = media.title.english || '';
+                    const romTitle = media.title.romaji || '';
+                    const sMatch = engTitle.match(/(?:Season\s+|Part\s+)(\d+)|(\d+)(?:st|nd|rd|th)\s+Season/i) 
+                                || romTitle.match(/(?:Season\s+|Part\s+)(\d+)|(\d+)(?:st|nd|rd|th)\s+Season/i);
+                    if (sMatch) {
+                        guessedSeason = parseInt(sMatch[1] || sMatch[2]);
+                    }
+                    tmdbMatch.guessed_season = guessedSeason;
+
                     // Override generic TMDB metadata with specific AniList season metadata
                     tmdbMatch.anilist_title = media.title.english || media.title.romaji || media.title.native;
                     if (media.coverImage && media.coverImage.extraLarge) {
@@ -114,7 +124,8 @@ const API = {
             backdrop: item.backdrop_path ? `${IMG_BASE_URL}original${item.backdrop_path}` : 'https://via.placeholder.com/1280x720?text=No+Background',
             year: (item.release_date || item.first_air_date || "N/A").split('-')[0],
             rating: item.vote_average ? item.vote_average.toFixed(1) : "N/A",
-            type: mediaType
+            type: mediaType,
+            guessed_season: item.guessed_season || 1
         };
     },
 

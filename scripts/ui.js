@@ -147,7 +147,7 @@ const UI = {
 
     createCardHTML: (item) => {
         return `
-            <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+            <div class="media-card" onclick="window.location.hash=#/">
                 <div class="card-image-wrapper">
                     <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
                 </div>
@@ -406,7 +406,7 @@ const UI = {
         }
 
         dropdown.innerHTML = items.map(item => `
-            <a href="#${item.type || 'movie'}/${item.id}" class="nav-search-result-item" onclick="document.getElementById('nav-search-dropdown').classList.remove('active')">
+            <a href="#${item.type || 'movie'}/${item.id}${item.guessed_season && item.guessed_season > 1 ? '?s=' + item.guessed_season : ''}" class="nav-search-result-item" onclick="document.getElementById('nav-search-dropdown').classList.remove('active')">
                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                 <div class="nav-search-result-info">
                     <div class="nav-search-result-title">${item.title}</div>
@@ -423,7 +423,7 @@ const UI = {
         let cards = items.map((item, index) => {
             const num = (index + 1).toString().padStart(2, '0');
             return `
-                <div class="media-card numbered-card" data-number="${num}" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                <div class="media-card numbered-card" data-number="${num}" onclick="window.location.hash=#/">
                     <div class="card-image-wrapper">
                         <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
                     </div>
@@ -453,7 +453,7 @@ const UI = {
     buildCompactList: (title, items) => {
         if (!items || items.length === 0) return '';
         let listHtml = items.slice(0, 5).map(item => `
-            <div class="compact-list-item" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+            <div class="compact-list-item" onclick="window.location.hash=#/">
                 <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
                 <div class="compact-info">
                     <div class="compact-title">${item.title}</div>
@@ -487,7 +487,7 @@ const UI = {
         let listHtml = items.slice(0, 10).map((item, index) => {
             const num = (index + 1).toString().padStart(2, '0');
             return `
-                <div class="most-viewed-item" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                <div class="most-viewed-item" onclick="window.location.hash=#/">
                     <div class="most-viewed-rank">${num}</div>
                     <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
                     <div class="compact-info">
@@ -532,7 +532,7 @@ const UI = {
                     ${window.animeHeroData.map((item, index) => {
                         const bgImg = item.backdrop ? item.backdrop : item.poster.replace('w500', 'original');
                         return `
-                        <div class="movies-hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}" style="background-image: url('${bgImg}'); cursor:pointer;" onclick="window.location.hash='#${item.type || 'tv'}/${item.id}'">
+                        <div class="movies-hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}" style="background-image: url('${bgImg}'); cursor:pointer;" onclick="window.location.hash=#/">
                             <div class="movies-hero-gradient"></div>
                             <div class="movies-hero-content">
                                 <div class="movies-hero-tag" style="color: var(--accent-primary);"><i class="fas fa-fire"></i> #${index + 1} Trending & Popular</div>
@@ -544,7 +544,7 @@ const UI = {
                                 </div>
                                 <p class="movies-hero-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom:15px;">${item.description}</p>
                                 <div class="movies-hero-actions">
-                                    <button class="btn btn-primary" style="background: var(--accent-primary); border-radius: 25px;" onclick="event.stopPropagation(); window.location.hash='#${item.type || 'tv'}/${item.id}'"><i class="fas fa-play"></i> Watch Now</button>
+                                    <button class="btn btn-primary" style="background: var(--accent-primary); border-radius: 25px;" onclick="event.stopPropagation(); window.location.hash=#/"><i class="fas fa-play"></i> Watch Now</button>
                                     <button class="btn btn-secondary" style="border-radius: 25px;" onclick="event.stopPropagation();"><i class="fas fa-plus"></i> My List</button>
                                 </div>
                             </div>
@@ -573,7 +573,7 @@ const UI = {
                     ${trending.slice(1, 15).map((item, index) => {
                         const num = (index + 1).toString().padStart(2, '0');
                         return `
-                            <div class="media-card numbered-card" data-number="${num}" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                            <div class="media-card numbered-card" data-number="${num}" onclick="window.location.hash=#/">
                                 <div class="card-image-wrapper">
                                     <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
                                 </div>
@@ -619,7 +619,7 @@ const UI = {
                         <span style="font-size: 0.8rem; color: #aaa; font-weight: normal; cursor: pointer;">View All</span>
                     </h3>
                     ${items.slice(0, 5).map(item => `
-                        <div class="compact-list-item" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+                        <div class="compact-list-item" onclick="window.location.hash=#/">
                             <img src="${item.poster}" alt="${item.title}" class="compact-thumbnail" loading="lazy">
                             <div class="compact-info">
                                 <div class="compact-title">${item.title}</div>
@@ -685,7 +685,7 @@ const UI = {
                             }
                             const epNum = item.latest_episode ? item.latest_episode : (Math.floor(Math.random()*24)+1);
                             return `
-                            <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'" style="min-width:0; width:100%;">
+                            <div class="media-card" onclick="window.location.hash=#/" style="min-width:0; width:100%;">
                                 <div class="card-image-wrapper">
                                     <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
                                 </div>
@@ -779,7 +779,7 @@ const UI = {
         return chunk.map((item, idx) => {
             const deterministicEp = (hash + item.id) % 24 + 1;
             return `
-            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="window.location.hash=#/">
                 <img src="${item.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:4px;" loading="lazy">
                 <div style="overflow:hidden;">
                     <div style="font-size:0.75rem; color:#aaa; margin-bottom:2px;">${times[idx % times.length]}</div>
@@ -843,8 +843,8 @@ const UI = {
                                         </div>
                                         <p class="movies-hero-desc">${(item.description || '').substring(0, 200)}...</p>
                                         <div class="movies-hero-buttons">
-                                            <button class="btn-play-now" onclick="window.location.hash='#${mediaType}/${item.id}'"><i class="fas fa-play"></i> Play Now</button>
-                                            <button class="btn-more-info" onclick="window.location.hash='#${mediaType}/${item.id}'"><i class="fas fa-info-circle"></i> More Info</button>
+                                            <button class="btn-play-now" onclick="window.location.hash=#/"><i class="fas fa-play"></i> Play Now</button>
+                                            <button class="btn-more-info" onclick="window.location.hash=#/"><i class="fas fa-info-circle"></i> More Info</button>
                                         </div>
                                     </div>
                                 </div>
@@ -865,14 +865,14 @@ const UI = {
                 let cardsHtml = items.map(item => {
                     if (type === 'popular') {
                         return `
-                            <div class="movie-card-popular" onclick="window.location.hash='#${mediaType}/${item.id}'">
+                            <div class="movie-card-popular" onclick="window.location.hash=#/">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-popular-rating"><i class="fas fa-star" style="color:#ffc107;"></i> ${item.rating}</div>
                             </div>
                         `;
                     } else if (type === 'toprated') {
                         return `
-                            <div class="movie-card-toprated" onclick="window.location.hash='#${mediaType}/${item.id}'">
+                            <div class="movie-card-toprated" onclick="window.location.hash=#/">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-toprated-badge">${item.rating}</div>
                                 <div class="movie-card-toprated-overlay">
@@ -883,7 +883,7 @@ const UI = {
                     } else if (type === 'continue') {
                         const subtext = mediaType === 'tv' ? `S1 E${Math.floor(Math.random() * 8) + 1} • ${Math.floor(Math.random() * 50) + 10}m left` : `${Math.floor(Math.random() * 50) + 10}m left`;
                         return `
-                            <div class="movie-card-continue" onclick="window.location.hash='#${mediaType}/${item.id}'">
+                            <div class="movie-card-continue" onclick="window.location.hash=#/">
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-continue-overlay">
                                     <div class="continue-info">
@@ -899,7 +899,7 @@ const UI = {
                         `;
                     } else if (type === 'newrelease') {
                         return `
-                            <div class="movie-card-newrelease" onclick="window.location.hash='#${mediaType}/${item.id}'">
+                            <div class="movie-card-newrelease" onclick="window.location.hash=#/">
                                 <div class="movie-card-new-badge">NEW</div>
                                 <img src="${item.poster}" alt="${item.title}" loading="lazy">
                                 <div class="movie-card-newrelease-overlay">
@@ -1536,7 +1536,7 @@ const UI = {
         const cardsHtml = data.results.map(item => {
             // Special compact card for filter grid
             return `
-                <div class="movie-card-popular" onclick="window.location.hash='#${window.filterState.type}/${item.id}'">
+                <div class="movie-card-popular" onclick="window.location.hash=#/">
                     <img src="${item.poster}" alt="${item.title}" loading="lazy">
                     <div class="movie-card-popular-rating">
                         <span style="font-weight:400; font-size:0.8rem; margin-right:4px;">${item.year}</span>
