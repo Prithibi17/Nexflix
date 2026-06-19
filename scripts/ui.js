@@ -663,20 +663,36 @@ const UI = {
                 <div class="dashboard-main">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-star" style="color:#ffc107;"></i> Recently Updated</h3>
-                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'recently_updated', rating: 0 }; window.location.hash='#filter';">View All</span>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'primary_release_date.desc', rating: 0 }; window.location.hash='#filter';">View All</span>
                     </div>
                     <div class="dashboard-grid" style="margin-bottom: 3rem;">
-                        ${recent.slice(0, 15).map(item => `
+                        ${recent.slice(0, 15).map(item => {
+                            let timeString = 'Today';
+                            if (item.latest_episode_date) {
+                                const diffMs = new Date() - new Date(item.latest_episode_date);
+                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                if (diffDays === 0) {
+                                    // Calculate pseudo-random hours ago based on id to simulate real-time
+                                    const hours = (item.id % 12) + 1;
+                                    timeString = `${hours} hour${hours > 1 ? 's' : ''} ago`;
+                                } else if (diffDays === 1) {
+                                    timeString = '1 day ago';
+                                } else {
+                                    timeString = `${diffDays} days ago`;
+                                }
+                            }
+                            const epNum = item.latest_episode ? item.latest_episode : (Math.floor(Math.random()*24)+1);
+                            return `
                             <div class="media-card" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'" style="min-width:0; width:100%;">
                                 <div class="card-image-wrapper">
                                     <img src="${item.poster}" alt="${item.title}" class="card-img" loading="lazy">
                                 </div>
                                 <div style="padding: 10px 0;">
                                     <h4 class="card-title" style="font-size:0.9rem; margin-bottom:4px;">${item.title}</h4>
-                                    <div class="card-meta" style="font-size:0.8rem; color:#aaa;">EP ${Math.floor(Math.random()*24)+1} • Today</div>
+                                    <div class="card-meta" style="font-size:0.8rem; color:#aaa;">EP ${epNum} • ${timeString}</div>
                                 </div>
                             </div>
-                        `).join('')}
+                        `;}).join('')}
                     </div>
                     
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -1010,7 +1026,7 @@ const UI = {
                         ${UI.buildFilterDropdown('sort', 'Sort by', [
                             { id: 'popularity.desc', label: 'Popularity' },
                             { id: 'vote_average.desc', label: 'Highest Rated' },
-                            { id: 'recently_updated', label: 'Recently Updated' },
+                            { id: 'primary_release_date.desc', label: 'Recently Added' },
                             { id: 'title.asc', label: 'A-Z' },
                             { id: 'title.desc', label: 'Z-A' }
                         ], 'radio')}

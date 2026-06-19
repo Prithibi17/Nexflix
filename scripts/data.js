@@ -61,16 +61,48 @@ const API = {
     },
 
     getAnimeRecent: async (page = 1) => {
-        // Recently added/updated
-        // TMDB doesn't allow sorting by "recently updated" (last_air_date). 
-        // Best proxy for "Recent Anime Episodes" is to fetch currently airing shows, sorted by popularity.
+        // Find popular currently airing anime
         const today = new Date().toISOString().split('T')[0];
-        const lastMonthDate = new Date();
-        lastMonthDate.setDate(lastMonthDate.getDate() - 30);
-        const lastMonth = lastMonthDate.toISOString().split('T')[0];
         
-        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&air_date.gte=${lastMonth}&air_date.lte=${today}&sort_by=popularity.desc&page=${page}`);
-        return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+        // Fetch 2 pages to get a good pool of recent shows
+        const [d1, d2] = await Promise.all([
+            API.fetchData(`/discover/tv?${ANIME_QUERY}&air_date.lte=${today}&sort_by=popularity.desc&page=1`),
+            API.fetchData(`/discover/tv?${ANIME_QUERY}&air_date.lte=${today}&sort_by=popularity.desc&page=2`)
+        ]);
+        
+        let pool = [];
+        if (d1 && d1.results) pool = pool.concat(d1.results);
+        if (d2 && d2.results) pool = pool.concat(d2.results);
+        
+        if (pool.length === 0) return [];
+
+        // Fetch details to get precise last_episode_to_air
+        const detailPromises = pool.map(show => API.fetchData(`/tv/${show.id}`));
+        const detailedShows = await Promise.all(detailPromises);
+        
+        const validShows = detailedShows.filter(show => show && show.last_episode_to_air && show.last_episode_to_air.air_date);
+        
+        // Sort by last_episode_to_air.air_date descending
+        validShows.sort((a, b) => {
+            const dateA = new Date(a.last_episode_to_air.air_date).getTime();
+            const dateB = new Date(b.last_episode_to_air.air_date).getTime();
+            if (dateB !== dateA) {
+                return dateB - dateA; // Newest first
+            }
+            // Tie-breaker: highest popularity
+            return b.popularity - a.popularity;
+        });
+
+        const start = (page - 1) * 20;
+        const end = start + 20;
+        const paginated = validShows.slice(start, end);
+        
+        return paginated.map(item => {
+            const formatted = API.formatMedia(item, 'tv');
+            formatted.latest_episode = item.last_episode_to_air.episode_number;
+            formatted.latest_episode_date = item.last_episode_to_air.air_date;
+            return formatted;
+        });
     },
 
     getAnimePopular: async (page = 1) => {
@@ -290,18 +322,7 @@ const API = {
             }
 
             if (params.sort) {
-                if (params.sort === 'recently_updated') {
-                    const today = new Date().toISOString().split('T')[0];
-                    const lastMonthDate = new Date();
-                    lastMonthDate.setDate(lastMonthDate.getDate() - 30);
-                    const lastMonth = lastMonthDate.toISOString().split('T')[0];
-                    
-                    queryParams.push(`air_date.lte=${today}`);
-                    queryParams.push(`air_date.gte=${lastMonth}`);
-                    queryParams.push(`sort_by=popularity.desc`);
-                } else {
-                    queryParams.push(`sort_by=${params.sort}`);
-                }
+                queryParams.push(`sort_by=${params.sort}`);
             } else {
                 queryParams.push(`sort_by=popularity.desc`);
             }
