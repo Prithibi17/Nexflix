@@ -273,18 +273,37 @@ const UI = {
     },
 
     buildSeasonSection: (seasons, currentSeasonNum, tvId, relatedShows = []) => {
+        const lang = window.currentAudioLanguage || 'sub';
         return `
             <section class="content-row" id="season-episodes-section">
-                <div class="row-header" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px;">
+                <div class="row-header" style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
                     <h3 style="margin: 0;">Episodes</h3>
                     <select id="episode-range-selector" class="season-selector" style="display: none; background: #1c202a; color: #fff; border: 1px solid rgba(139, 124, 255,0.5); padding: 8px 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; outline: none; cursor: pointer;" onchange="UI.renderEpisodeChunk(${tvId}, this.value)">
                     </select>
+                    <div class="lang-toggle-wrapper" style="display: flex; align-items: center; background: #1c202a; border-radius: 20px; padding: 4px; border: 1px solid rgba(139, 124, 255, 0.3); margin-left: auto;">
+                        <button onclick="UI.toggleLanguage('sub')" id="lang-btn-sub" style="background: ${lang === 'sub' ? '#8b7cff' : 'transparent'}; color: ${lang === 'sub' ? '#fff' : '#aaa'}; border: none; border-radius: 16px; padding: 6px 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">SUB</button>
+                        <button onclick="UI.toggleLanguage('dub')" id="lang-btn-dub" style="background: ${lang === 'dub' ? '#8b7cff' : 'transparent'}; color: ${lang === 'dub' ? '#fff' : '#aaa'}; border: none; border-radius: 16px; padding: 6px 16px; font-weight: bold; cursor: pointer; transition: all 0.3s ease;">DUB</button>
+                    </div>
+                </div>
+                <div style="font-size: 0.85rem; color: #aaa; margin-top: -15px; margin-bottom: 20px; text-align: right; display: flex; justify-content: flex-end; align-items: center; gap: 5px;">
+                    <i class="fas fa-info-circle"></i> Player will attempt to load your preferred language.
                 </div>
                 <div class="carousel" id="episodes-container">
                     <!-- Episodes injected here -->
                 </div>
             </section>
         `;
+    },
+
+    toggleLanguage: (lang) => {
+        window.currentAudioLanguage = lang;
+        document.getElementById('lang-btn-sub').style.background = lang === 'sub' ? '#8b7cff' : 'transparent';
+        document.getElementById('lang-btn-sub').style.color = lang === 'sub' ? '#fff' : '#aaa';
+        document.getElementById('lang-btn-dub').style.background = lang === 'dub' ? '#8b7cff' : 'transparent';
+        document.getElementById('lang-btn-dub').style.color = lang === 'dub' ? '#fff' : '#aaa';
+        
+        // Save preference globally across reloads
+        try { localStorage.setItem('nexflix_audio_lang', lang); } catch(e) {}
     },
 
     handleSeasonDropdownChange: (tvId, value) => {

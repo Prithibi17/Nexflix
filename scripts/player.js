@@ -10,10 +10,13 @@ const Player = {
         playerContainer.id = 'active-player';
         
         let url = '';
+        const lang = window.currentAudioLanguage || 'sub';
+        const langParam = lang === 'dub' ? '&audio=dub&lang=en&dub=1' : '&audio=sub&lang=ja&dub=0';
+        
         if (type === 'movie') {
-            url = `https://api.codespecters.com/embed/movie/${id}?apikey=${NEXSTREAM_API_KEY}`;
+            url = `https://api.codespecters.com/embed/movie/${id}?apikey=${NEXSTREAM_API_KEY}${langParam}`;
         } else {
-            url = `https://api.codespecters.com/embed/tv/${id}/${s}/${e}?apikey=${NEXSTREAM_API_KEY}`;
+            url = `https://api.codespecters.com/embed/tv/${id}/${s}/${e}?apikey=${NEXSTREAM_API_KEY}${langParam}`;
         }
 
         playerContainer.innerHTML = `

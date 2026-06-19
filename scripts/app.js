@@ -9,6 +9,7 @@ const App = {
     },
 
     init: () => {
+        try { window.currentAudioLanguage = localStorage.getItem('nexflix_audio_lang') || 'sub'; } catch(e) { window.currentAudioLanguage = 'sub'; }
         window.addEventListener('hashchange', App.handleRoute);
         // Setup Infinite Scroll Listener
         window.addEventListener('scroll', App.handleInfiniteScroll);
