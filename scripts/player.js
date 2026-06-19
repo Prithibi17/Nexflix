@@ -12,18 +12,41 @@ const Player = {
         Player.showLoader();
 
         try {
-            const apiUrl = type === 'movie' 
-                ? `https://api.codespecters.com/api/movie/${id}?apikey=${NEXSTREAM_API_KEY}`
-                : `https://api.codespecters.com/api/tv/${id}/${s}/${e}?apikey=${NEXSTREAM_API_KEY}`;
+            let sources = [];
+            let titleMeta = null;
 
-            const response = await fetch(apiUrl);
-            const data = await response.json();
+            try {
+                const apiUrl = type === 'movie' 
+                    ? `https://api.codespecters.com/api/movie/${id}?apikey=${NEXSTREAM_API_KEY}`
+                    : `https://api.codespecters.com/api/tv/${id}/${s}/${e}?apikey=${NEXSTREAM_API_KEY}`;
 
-            if (!data.success || !data.sources || data.sources.length === 0) {
-                throw new Error("No sources found on NEXSTREAM.");
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (data.success && data.sources && data.sources.length > 0) {
+                    sources = data.sources;
+                    if (data.meta) titleMeta = data.meta.title;
+                }
+            } catch (err) {
+                console.warn("NEXSTREAM API failed, falling back to alternative providers.", err);
             }
 
-            Player.currentSources = data.sources;
+            // If NEXSTREAM failed or returned no sources, populate with robust fallback embeds
+            if (sources.length === 0) {
+                const vMe = type === 'movie' ? `https://vidsrc.me/embed/movie?tmdb=${id}` : `https://vidsrc.me/embed/tv?tmdb=${id}&season=${s}&episode=${e}`;
+                const vTo = type === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${s}/${e}`;
+                const mEmbed = type === 'movie' ? `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1` : `https://multiembed.mov/directstream.php?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
+                const sEmbed = type === 'movie' ? `https://multiembed.mov/?video_id=${id}&tmdb=1` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}`;
+                
+                sources = [
+                    { name: 'Server 1 (VidSrc ME)', url: vMe },
+                    { name: 'Server 2 (VidSrc TO)', url: vTo },
+                    { name: 'Server 3 (MultiEmbed)', url: mEmbed },
+                    { name: 'Server 4 (MultiEmbed Alt)', url: sEmbed }
+                ];
+            }
+
+            Player.currentSources = sources;
             Player.currentServerIndex = 0;
             
             Player.hideLoader();
@@ -32,13 +55,18 @@ const Player = {
             
             // Set the title
             const titleEl = document.querySelector('.player-title-display');
-            if (titleEl && data.meta && data.meta.title) {
-                titleEl.innerText = data.meta.title + (type === 'tv' ? ` - S${s} E${e}` : '');
+            if (titleEl) {
+                if (titleMeta) {
+                    titleEl.innerText = titleMeta + (type === 'tv' ? ` - S${s} E${e}` : '');
+                } else {
+                    // Fallback title formatting if no meta
+                    titleEl.innerText = type === 'tv' ? `TV Show - S${s} E${e}` : 'Movie';
+                }
             }
 
         } catch (error) {
-            console.error("Failed to load NEXSTREAM sources", error);
-            document.querySelector('.player-loader').innerHTML = `<div style="color:red; text-align:center;">Failed to load video.<br>The requested title may not be available on NEXSTREAM yet.</div>`;
+            console.error("Critical failure loading player", error);
+            document.querySelector('.player-loader').innerHTML = `<div style="color:red; text-align:center;">Failed to load video completely.</div>`;
         }
     },
 
