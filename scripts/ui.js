@@ -569,8 +569,10 @@ const UI = {
                         `;
                     }).join('')}
                 </div>
-                <div class="movies-hero-nav" style="z-index: 20;">
-                    ${window.animeHeroData.map((_, index) => `<div class="hero-dot movies-hero-dot ${index === 0 ? 'active' : ''}" onclick="UI.setAnimeHero(${index}); event.stopPropagation();"></div>`).join('')}
+                <div class="movies-hero-nav movies-hero-nav-left" onclick="UI.prevAnimeHero()"><i class="fas fa-chevron-left"></i></div>
+                <div class="movies-hero-nav movies-hero-nav-right" onclick="UI.nextAnimeHero()"><i class="fas fa-chevron-right"></i></div>
+                <div class="movies-hero-dots" id="anime-hero-dots">
+                    ${window.animeHeroData.map((_, index) => `<div class="movies-hero-dot ${index === 0 ? 'active' : ''}" onclick="UI.setAnimeHero(${index}); event.stopPropagation();"></div>`).join('')}
                 </div>
             </div>
         `;
@@ -974,8 +976,7 @@ const UI = {
         const container = document.getElementById('anime-hero-slides-container');
         if (!container) return;
         const slides = container.querySelectorAll('.movies-hero-slide');
-        const nav = container.nextElementSibling;
-        const dots = nav ? nav.querySelectorAll('.movies-hero-dot') : [];
+        const dots = container.parentElement.querySelectorAll('.movies-hero-dot');
         if (!slides.length) return;
 
         slides.forEach(s => s.classList.remove('active'));
@@ -995,6 +996,13 @@ const UI = {
         let next = window.currentAnimeHeroIndex + 1;
         if (next >= window.animeHeroData.length) next = 0;
         UI.setAnimeHero(next);
+    },
+
+    prevAnimeHero: () => {
+        if (!window.animeHeroData) return;
+        let prev = window.currentAnimeHeroIndex - 1;
+        if (prev < 0) prev = window.animeHeroData.length - 1;
+        UI.setAnimeHero(prev);
     },
 
     // --- Filter Dashboard Methods ---
