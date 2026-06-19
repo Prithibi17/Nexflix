@@ -39,38 +39,46 @@ const API = {
         }
     },
 
-    // Map AniList Media objects to TMDB search results
+    // Map AniList Media objects to TMDB search results sequentially to avoid rate limits
     mapAniListToTMDB: async (anilistMediaArray) => {
-        const promises = anilistMediaArray.map(async (media) => {
-            if (!media) return null;
+        const results = [];
+        for (const media of anilistMediaArray) {
+            if (!media) {
+                results.push(null);
+                continue;
+            }
             // Clean up titles by removing common suffixes/tags that confuse TMDB search
             const cleanTitle = (title) => {
                 if (!title) return null;
-                // Remove colons and anything after, typical in anime titles for seasons
                 let clean = title.split(':')[0].trim();
-                // Remove season indicators like "2nd Season" or "Part 2"
                 clean = clean.replace(/((\d+(st|nd|rd|th)\s+Season)|(Season\s+\d+)|(Part\s+\d+))/gi, '').trim();
                 return clean;
             };
 
             const searchTitle = cleanTitle(media.title.romaji) || cleanTitle(media.title.english) || cleanTitle(media.title.native);
-            if (!searchTitle) return null;
+            if (!searchTitle) {
+                results.push(null);
+                continue;
+            }
             
+            // Artificial delay of 25ms to prevent overwhelming TMDB API (40 req/sec limit)
+            await new Promise(r => setTimeout(r, 25));
+
             let searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(searchTitle)}`);
             if (!searchData || !searchData.results || searchData.results.length === 0) {
-                // Try raw english title if cleaned romaji failed
                 if (media.title.english) {
+                    await new Promise(r => setTimeout(r, 25));
                     searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(cleanTitle(media.title.english))}`);
                 }
             }
             if (searchData && searchData.results && searchData.results.length > 0) {
-                // Prioritize animation (genre 16) results if possible
                 const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
-                return animationMatch || searchData.results[0];
+                results.push(animationMatch || searchData.results[0]);
+            } else {
+                results.push(null);
             }
-            return null;
-        });
-        return await Promise.all(promises);
+        }
+        return results;
     },
 
     // Format raw TMDB data into our app's structure
@@ -128,11 +136,11 @@ const API = {
 
     getAnimeRecent: async (page = 1) => {
         const currentTimestamp = Math.floor(Date.now() / 1000);
-        // Using sort: TIME_DESC and airingAt_less to strictly get recently aired
+        // Using sort: TIME_DESC and airingAt_lesser to strictly get recently aired
         const query = `
             query ($page: Int, $time: Int) {
                 Page(page: $page, perPage: 30) {
-                    airingSchedules(sort: TIME_DESC, airingAt_less: $time) {
+                    airingSchedules(sort: TIME_DESC, airingAt_lesser: $time) {
                         episode
                         airingAt
                         media {
