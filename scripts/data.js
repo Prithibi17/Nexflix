@@ -43,7 +43,7 @@ const API = {
     mapAniListToTMDB: async (anilistMediaArray) => {
         const results = [];
         let mappingCache = {};
-        try { mappingCache = JSON.parse(localStorage.getItem('tmdb_mapping_cache')) || {}; } catch(e) {}
+        try { mappingCache = JSON.parse(localStorage.getItem('tmdb_mapping_cache_v2')) || {}; } catch(e) {}
         
         const chunkArray = (arr, size) => arr.length ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)] : [];
         const chunks = chunkArray(anilistMediaArray, 10); // Process 10 at a time
@@ -74,12 +74,16 @@ const API = {
                         }
                     }
                     if (searchData && searchData.results && searchData.results.length > 0) {
+                        const exactMatch = searchData.results.find(r => 
+                            r.genre_ids && r.genre_ids.includes(16) && 
+                            (r.name.toLowerCase() === searchTitle.toLowerCase() || (r.original_name && r.original_name.toLowerCase() === searchTitle.toLowerCase()))
+                        );
                         const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
-                        tmdbMatch = animationMatch || searchData.results[0];
+                        tmdbMatch = exactMatch || animationMatch || searchData.results[0];
                     }
                     
                     mappingCache[searchTitle] = tmdbMatch ? JSON.parse(JSON.stringify(tmdbMatch)) : null;
-                    try { localStorage.setItem('tmdb_mapping_cache', JSON.stringify(mappingCache)); } catch(e) {}
+                    try { localStorage.setItem('tmdb_mapping_cache_v2', JSON.stringify(mappingCache)); } catch(e) {}
                 }
 
                 if (tmdbMatch) {
