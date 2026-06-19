@@ -25,8 +25,15 @@ const App = {
         let hash = route;
         if (route === 'details') {
             hash = `${params.type}/${params.id}`;
+            const qs = [];
             if (params.type === 'tv' && params.season > 1) {
-                hash += `?s=${params.season}`;
+                qs.push(`s=${params.season}`);
+            }
+            if (params.eps) {
+                qs.push(`eps=${params.eps}`);
+            }
+            if (qs.length > 0) {
+                hash += `?${qs.join('&')}`;
             }
         }
         window.location.hash = hash;
@@ -101,7 +108,8 @@ const App = {
                 const [type, id] = path.split('/');
                 const params = new URLSearchParams(queryStr || '');
                 const targetSeason = params.get('s');
-                await UI.renderDetail(id, type, targetSeason);
+                const anilistEps = params.get('eps');
+                await UI.renderDetail(id, type, targetSeason, anilistEps);
             }
             else {
                 // Fallback

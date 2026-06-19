@@ -102,6 +102,7 @@ const API = {
                     if (media.coverImage && media.coverImage.extraLarge) {
                         tmdbMatch.anilist_poster = media.coverImage.extraLarge;
                     }
+                    tmdbMatch.anilist_episodes = media.episodes || (media.nextAiringEpisode ? media.nextAiringEpisode.episode : 0);
                 }
                 
                 return tmdbMatch;
@@ -129,7 +130,8 @@ const API = {
             year: (item.release_date || item.first_air_date || "N/A").split('-')[0],
             rating: item.vote_average ? item.vote_average.toFixed(1) : "N/A",
             type: mediaType,
-            guessed_season: item.guessed_season || 1
+            guessed_season: item.guessed_season || 1,
+            anilist_episodes: item.anilist_episodes || 0
         };
     },
 
@@ -157,6 +159,8 @@ const API = {
                         id
                         title { romaji english native }
                         coverImage { extraLarge }
+                        episodes
+                        nextAiringEpisode { episode }
                     }
                 }
             }
@@ -181,6 +185,8 @@ const API = {
                             id
                             title { romaji english native }
                             coverImage { extraLarge }
+                            episodes
+                            nextAiringEpisode { episode }
                         }
                     }
                 }
@@ -217,6 +223,8 @@ const API = {
                         id
                         title { romaji english native }
                         coverImage { extraLarge }
+                        episodes
+                        nextAiringEpisode { episode }
                     }
                 }
             }
