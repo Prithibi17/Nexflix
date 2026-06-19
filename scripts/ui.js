@@ -537,24 +537,40 @@ const UI = {
             return;
         }
 
-        // Hero Spotlight (Contained)
-        const heroData = trending[0];
-        const hero = await API.getDetails(heroData.id, heroData.type || 'tv') || heroData;
+        // Hero Carousel Data
+        const combinedTrendingAndPopular = [...trending, ...popular];
+        const uniqueHeroList = Array.from(new Map(combinedTrendingAndPopular.map(item => [item.id, item])).values()).slice(0, 10);
+        window.animeHeroData = await Promise.all(uniqueHeroList.map(async (item) => await API.getDetails(item.id, item.type || 'tv') || item));
+        window.currentAnimeHeroIndex = 0;
+
         const heroHtml = `
-            <div class="anime-hero-card" style="background-image: url('${hero.backdrop}'); cursor:pointer;" onclick="window.location.hash='#${hero.type}/${hero.id}'">
-                <div class="anime-hero-content">
-                    <div style="color: var(--accent-primary); font-weight: bold; margin-bottom: 10px; font-size: 0.9rem;"><i class="fas fa-fire"></i> #1 Trending Now</div>
-                    <h1 style="font-size: 3rem; margin-bottom: 10px; line-height: 1.1; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${hero.title}</h1>
-                    <div style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem; color: #ccc;">
-                        <span>${hero.year}</span>
-                        <span>16+</span>
-                        <span>${hero.genres ? hero.genres.slice(0,2).join(', ') : 'Animation'}</span>
-                    </div>
-                    <p style="font-size: 0.95rem; line-height: 1.6; color: #bbb; margin-bottom: 25px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${hero.description}</p>
-                    <div style="display: flex; gap: 15px;">
-                        <button class="btn btn-primary" style="background: var(--accent-primary); border-radius: 25px; padding: 10px 24px;"><i class="fas fa-play"></i> Play Now</button>
-                        <button class="btn btn-secondary" style="background: rgba(255,255,255,0.1); border-radius: 25px; padding: 10px 24px;"><i class="fas fa-plus"></i> My List</button>
-                    </div>
+            <div class="movies-hero-carousel" style="border-radius:12px; overflow:hidden; position:relative; aspect-ratio:21/9; margin-bottom:0;">
+                <div class="movies-hero-slides-container" id="anime-hero-slides-container">
+                    ${window.animeHeroData.map((item, index) => {
+                        const bgImg = item.backdrop ? item.backdrop : item.poster.replace('w500', 'original');
+                        return `
+                        <div class="movies-hero-slide ${index === 0 ? 'active' : ''}" data-index="${index}" style="background-image: url('${bgImg}'); cursor:pointer;" onclick="window.location.hash='#${item.type || 'tv'}/${item.id}'">
+                            <div class="movies-hero-gradient"></div>
+                            <div class="movies-hero-content">
+                                <div class="movies-hero-tag" style="color: var(--accent-primary);"><i class="fas fa-fire"></i> #${index + 1} Trending & Popular</div>
+                                <h1 class="movies-hero-title">${item.title}</h1>
+                                <div class="movies-hero-meta">
+                                    <span>${item.year}</span>
+                                    <span class="age-rating">16+</span>
+                                    <span>${item.genres ? item.genres.slice(0, 2).join(', ') : 'Animation'}</span>
+                                </div>
+                                <p class="movies-hero-desc" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom:15px;">${item.description}</p>
+                                <div class="movies-hero-actions">
+                                    <button class="btn btn-primary" style="background: var(--accent-primary); border-radius: 25px;" onclick="event.stopPropagation(); window.location.hash='#${item.type || 'tv'}/${item.id}'"><i class="fas fa-play"></i> Watch Now</button>
+                                    <button class="btn btn-secondary" style="border-radius: 25px;" onclick="event.stopPropagation();"><i class="fas fa-plus"></i> My List</button>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div class="movies-hero-nav" style="z-index: 20;">
+                    ${window.animeHeroData.map((_, index) => `<div class="hero-dot movies-hero-dot ${index === 0 ? 'active' : ''}" onclick="UI.setAnimeHero(${index}); event.stopPropagation();"></div>`).join('')}
                 </div>
             </div>
         `;
@@ -701,9 +717,18 @@ const UI = {
                         <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'popularity.desc', rating: 0 }; window.location.hash='#filter';">View Full Schedule</span>
                     </div>
                     <div class="schedule-header" id="anime-schedule-header">
-                        ${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => `
-                            <button class="schedule-btn ${day === 'Sun' ? 'active' : ''}" onclick="UI.changeScheduleDay('${day}')">${day}</button>
-                        `).join('')}
+                        ${[0,1,2,3,4,5,6].map(i => {
+                            const d = new Date();
+                            d.setDate(d.getDate() - d.getDay() + i);
+                            const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i];
+                            const isToday = d.getDate() === new Date().getDate();
+                            return `
+                            <button class="schedule-btn ${isToday ? 'active' : ''}" onclick="UI.changeScheduleDay('${dayName}')">
+                                <div style="font-size:0.8rem; opacity:0.8;">${dayName}</div>
+                                <div style="font-size:1.1rem; font-weight:bold;">${d.getDate()}</div>
+                            </button>
+                            `;
+                        }).join('')}
                     </div>
                     <div class="dashboard-grid" id="anime-schedule-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                         ${UI.buildScheduleGridHtml(trending, 'Sun')}
@@ -716,6 +741,13 @@ const UI = {
 
         appContent.innerHTML = html;
         window.scrollTo(0, 0);
+
+        if (window.animeHeroInterval) clearInterval(window.animeHeroInterval);
+        window.animeHeroInterval = setInterval(UI.nextAnimeHero, 5000);
+
+        // Auto-select today for schedule
+        const currentDayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+        UI.changeScheduleDay(currentDayName);
     },
 
     changeScheduleDay: (day) => {
@@ -935,6 +967,34 @@ const UI = {
         let prev = window.currentMoviesHeroIndex - 1;
         if (prev < 0) prev = window.moviesHeroData.length - 1;
         UI.setMoviesHero(prev);
+    },
+
+    setAnimeHero: (index) => {
+        window.currentAnimeHeroIndex = index;
+        const container = document.getElementById('anime-hero-slides-container');
+        if (!container) return;
+        const slides = container.querySelectorAll('.movies-hero-slide');
+        const nav = container.nextElementSibling;
+        const dots = nav ? nav.querySelectorAll('.movies-hero-dot') : [];
+        if (!slides.length) return;
+
+        slides.forEach(s => s.classList.remove('active'));
+        dots.forEach(d => d.classList.remove('active'));
+
+        if(slides[index]) slides[index].classList.add('active');
+        if(dots[index]) dots[index].classList.add('active');
+        
+        if (window.animeHeroInterval) {
+            clearInterval(window.animeHeroInterval);
+            window.animeHeroInterval = setInterval(UI.nextAnimeHero, 5000);
+        }
+    },
+
+    nextAnimeHero: () => {
+        if (!window.animeHeroData) return;
+        let next = window.currentAnimeHeroIndex + 1;
+        if (next >= window.animeHeroData.length) next = 0;
+        UI.setAnimeHero(next);
     },
 
     // --- Filter Dashboard Methods ---
