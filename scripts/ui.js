@@ -718,19 +718,12 @@ const UI = {
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-calendar-alt" style="color:var(--accent-primary);"></i> Estimated Schedule</h3>
                         <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'popularity.desc', rating: 0 }; window.location.hash='#filter';">View Full Schedule</span>
                     </div>
-                    <div class="schedule-header" id="anime-schedule-header">
-                        ${[0,1,2,3,4,5,6].map(i => {
-                            const d = new Date();
-                            d.setDate(d.getDate() - d.getDay() + i);
-                            const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i];
-                            const isToday = d.getDate() === new Date().getDate();
-                            return `
-                            <button class="schedule-btn ${isToday ? 'active' : ''}" onclick="UI.changeScheduleDay('${dayName}')">
-                                <div style="font-size:0.8rem; opacity:0.8;">${dayName}</div>
-                                <div style="font-size:1.1rem; font-weight:bold;">${d.getDate()}</div>
-                            </button>
-                            `;
-                        }).join('')}
+                    <div class="schedule-header-wrapper" style="display:flex; align-items:center; gap: 10px; margin-bottom: 20px;">
+                        <button class="btn-icon" style="background:rgba(255,255,255,0.05); border:none; padding:15px; border-radius:8px; color:#fff; cursor:pointer; flex-shrink:0; transition: background 0.2s;" onmouseover="this.style.background='var(--accent-primary)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="UI.scrollSchedule(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <div class="schedule-header" id="anime-schedule-header" style="flex:1; display:flex; gap:10px; margin-bottom:0;">
+                            <!-- Header rendered by JS -->
+                        </div>
+                        <button class="btn-icon" style="background:rgba(255,255,255,0.05); border:none; padding:15px; border-radius:8px; color:#fff; cursor:pointer; flex-shrink:0; transition: background 0.2s;" onmouseover="this.style.background='var(--accent-primary)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'" onclick="UI.scrollSchedule(1)"><i class="fas fa-chevron-right"></i></button>
                     </div>
                     <div class="dashboard-grid" id="anime-schedule-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));">
                         ${UI.buildScheduleGridHtml(trending, 'Sun')}
@@ -748,46 +741,70 @@ const UI = {
         window.animeHeroInterval = setInterval(UI.nextAnimeHero, 5000);
 
         // Auto-select today for schedule
-        const currentDayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
-        UI.changeScheduleDay(currentDayName);
+        window.scheduleOffsetDays = 0;
+        const today = new Date();
+        window.currentScheduleDate = today.toISOString().split('T')[0];
+        const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][today.getDay()];
+        UI.renderScheduleHeader();
+        UI.changeScheduleDay(window.currentScheduleDate, dayName);
     },
 
-    changeScheduleDay: (day) => {
+    renderScheduleHeader: () => {
         const header = document.getElementById('anime-schedule-header');
-        if (header) {
-            header.querySelectorAll('.schedule-btn').forEach(btn => {
-                if (btn.innerText === day) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        }
+        if (!header) return;
+        window.scheduleOffsetDays = window.scheduleOffsetDays || 0;
+        const html = [0,1,2,3,4,5,6].map(i => {
+            const d = new Date();
+            d.setDate(d.getDate() - d.getDay() + window.scheduleOffsetDays + i);
+            const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+            const isToday = d.toDateString() === new Date().toDateString();
+            const dateStr = d.toISOString().split('T')[0];
+            const isActive = window.currentScheduleDate === dateStr;
+            return `
+            <button class="schedule-btn ${isActive ? 'active' : ''}" onclick="UI.changeScheduleDay('${dateStr}', '${dayName}')" style="flex:1; border: ${isToday ? '1px solid var(--accent-primary)' : '1px solid transparent'};">
+                <div style="font-size:0.8rem; opacity:0.8; color: ${isToday ? 'var(--accent-primary)' : 'inherit'};">${dayName}</div>
+                <div style="font-size:1.1rem; font-weight:bold; color: ${isToday ? 'var(--accent-primary)' : 'inherit'};">${d.getDate()}</div>
+            </button>
+            `;
+        }).join('');
+        header.innerHTML = html;
+    },
+
+    scrollSchedule: (direction) => {
+        window.scheduleOffsetDays = (window.scheduleOffsetDays || 0) + (direction * 7);
+        UI.renderScheduleHeader();
+    },
+
+    changeScheduleDay: (dateStr, dayName) => {
+        window.currentScheduleDate = dateStr;
+        UI.renderScheduleHeader(); // re-render to update active state
         const grid = document.getElementById('anime-schedule-grid');
         if (grid && window.animeTrendingData) {
-            grid.innerHTML = UI.buildScheduleGridHtml(window.animeTrendingData, day);
+            grid.innerHTML = UI.buildScheduleGridHtml(window.animeTrendingData, dateStr);
         }
     },
 
-    buildScheduleGridHtml: (data, day) => {
+    buildScheduleGridHtml: (data, dateStr) => {
         if (!data || data.length === 0) return '';
         
-        // Pseudo-randomize selection based on day string
-        const hash = day.charCodeAt(0) + day.charCodeAt(1) + day.charCodeAt(2);
+        // Pseudo-randomize selection based on exact dateStr string (e.g., 2026-06-19)
+        const hash = dateStr.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         const startIndex = hash % Math.max(1, data.length - 6);
         const chunk = data.slice(startIndex, startIndex + 6);
         
         const times = ["08:00 AM", "09:30 AM", "11:00 AM", "01:30 PM", "03:00 PM", "05:00 PM"];
-        return chunk.map((item, idx) => `
-            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer;" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
+        return chunk.map((item, idx) => {
+            const deterministicEp = (hash + item.id) % 24 + 1;
+            return `
+            <div style="display:flex; gap:10px; background:#151821; padding:10px; border-radius:8px; cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'" onclick="window.location.hash='#${item.type || 'movie'}/${item.id}'">
                 <img src="${item.poster}" style="width:40px; height:60px; object-fit:cover; border-radius:4px;" loading="lazy">
                 <div style="overflow:hidden;">
                     <div style="font-size:0.75rem; color:#aaa; margin-bottom:2px;">${times[idx % times.length]}</div>
                     <div style="font-size:0.85rem; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
-                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">EP ${Math.floor(Math.random()*20)+1} <span style="background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:2px; margin-left:4px;">Upcoming</span></div>
+                    <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">EP ${deterministicEp} <span style="background:rgba(255,255,255,0.1); padding:2px 4px; border-radius:2px; margin-left:4px;">Upcoming</span></div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
     },
 
     // --- Media Dashboard Methods (Movies & Series) ---
