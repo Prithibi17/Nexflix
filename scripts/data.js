@@ -73,7 +73,15 @@ const API = {
             }
             if (searchData && searchData.results && searchData.results.length > 0) {
                 const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
-                results.push(animationMatch || searchData.results[0]);
+                const tmdbMatch = animationMatch || searchData.results[0];
+                
+                // Override generic TMDB metadata with specific AniList season metadata
+                tmdbMatch.anilist_title = media.title.english || media.title.romaji || media.title.native;
+                if (media.coverImage && media.coverImage.extraLarge) {
+                    tmdbMatch.anilist_poster = media.coverImage.extraLarge;
+                }
+                
+                results.push(tmdbMatch);
             } else {
                 results.push(null);
             }
@@ -90,9 +98,9 @@ const API = {
         
         return {
             id: item.id,
-            title: item.title || item.name,
+            title: item.anilist_title || item.title || item.name,
             description: item.overview || "No description available.",
-            poster: item.poster_path ? `${IMG_BASE_URL}w500${item.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image',
+            poster: item.anilist_poster || (item.poster_path ? `${IMG_BASE_URL}w500${item.poster_path}` : 'https://via.placeholder.com/500x750?text=No+Image'),
             backdrop: item.backdrop_path ? `${IMG_BASE_URL}original${item.backdrop_path}` : 'https://via.placeholder.com/1280x720?text=No+Background',
             year: (item.release_date || item.first_air_date || "N/A").split('-')[0],
             rating: item.vote_average ? item.vote_average.toFixed(1) : "N/A",
@@ -123,6 +131,7 @@ const API = {
                     media(type: ANIME, sort: TRENDING_DESC) {
                         id
                         title { romaji english native }
+                        coverImage { extraLarge }
                     }
                 }
             }
@@ -146,6 +155,7 @@ const API = {
                         media {
                             id
                             title { romaji english native }
+                            coverImage { extraLarge }
                         }
                     }
                 }
@@ -181,6 +191,7 @@ const API = {
                     media(type: ANIME, sort: POPULARITY_DESC) {
                         id
                         title { romaji english native }
+                        coverImage { extraLarge }
                     }
                 }
             }
