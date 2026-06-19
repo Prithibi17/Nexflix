@@ -607,13 +607,7 @@ const UI = {
             </div>
         `;
 
-        // Genre Bar
-        html += `
-            <div class="anime-genre-bar">
-                <button class="genre-tag" style="background: var(--accent-primary); color: white;"><i class="fas fa-layer-group"></i> All</button>
-                ${['Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery', 'Horror', 'Thriller', 'Supernatural', 'Slice of Life', 'Sports', 'Mecha', 'Historical'].map(g => `<button class="genre-tag"><i class="fas fa-star" style="color:var(--accent-primary); font-size:0.6rem;"></i> ${g}</button>`).join('')}
-            </div>
-        `;
+
 
         // 4 Columns
         const buildCol = (title, icon, items) => {
