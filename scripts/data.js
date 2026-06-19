@@ -43,7 +43,7 @@ const API = {
     mapAniListToTMDB: async (anilistMediaArray) => {
         const results = [];
         let mappingCache = {};
-        try { mappingCache = JSON.parse(localStorage.getItem('tmdb_mapping_cache_v2')) || {}; } catch(e) {}
+        try { mappingCache = JSON.parse(localStorage.getItem('tmdb_mapping_cache_v3')) || {}; } catch(e) {}
         
         const chunkArray = (arr, size) => arr.length ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)] : [];
         const chunks = chunkArray(anilistMediaArray, 10); // Process 10 at a time
@@ -59,7 +59,9 @@ const API = {
                     return clean;
                 };
 
-                const searchTitle = cleanTitle(media.title.romaji) || cleanTitle(media.title.english) || cleanTitle(media.title.native);
+                const engClean = cleanTitle(media.title.english);
+                const romClean = cleanTitle(media.title.romaji);
+                const searchTitle = engClean || romClean || cleanTitle(media.title.native);
                 if (!searchTitle) return null;
                 
                 let tmdbMatch = null;
@@ -69,21 +71,24 @@ const API = {
                 } else {
                     let searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(searchTitle)}`);
                     if (!searchData || !searchData.results || searchData.results.length === 0) {
-                        if (media.title.english) {
-                            searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(cleanTitle(media.title.english))}`);
+                        if (engClean && romClean) {
+                            searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(romClean)}`);
                         }
                     }
                     if (searchData && searchData.results && searchData.results.length > 0) {
-                        const exactMatch = searchData.results.find(r => 
-                            r.genre_ids && r.genre_ids.includes(16) && 
-                            (r.name.toLowerCase() === searchTitle.toLowerCase() || (r.original_name && r.original_name.toLowerCase() === searchTitle.toLowerCase()))
-                        );
+                        const exactMatch = searchData.results.find(r => {
+                            if (!r.genre_ids || !r.genre_ids.includes(16)) return false;
+                            const tName = r.name ? r.name.toLowerCase() : '';
+                            const tOrig = r.original_name ? r.original_name.toLowerCase() : '';
+                            return (engClean && (tName === engClean.toLowerCase() || tOrig === engClean.toLowerCase())) ||
+                                   (romClean && (tName === romClean.toLowerCase() || tOrig === romClean.toLowerCase()));
+                        });
                         const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
                         tmdbMatch = exactMatch || animationMatch || searchData.results[0];
                     }
                     
                     mappingCache[searchTitle] = tmdbMatch ? JSON.parse(JSON.stringify(tmdbMatch)) : null;
-                    try { localStorage.setItem('tmdb_mapping_cache_v2', JSON.stringify(mappingCache)); } catch(e) {}
+                    try { localStorage.setItem('tmdb_mapping_cache_v3', JSON.stringify(mappingCache)); } catch(e) {}
                 }
 
                 if (tmdbMatch) {
