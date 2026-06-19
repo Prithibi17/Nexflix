@@ -663,7 +663,7 @@ const UI = {
                 <div class="dashboard-main">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                         <h3 style="color: #fff; display:flex; align-items:center; gap:8px;"><i class="fas fa-star" style="color:#ffc107;"></i> Recently Updated</h3>
-                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'primary_release_date.desc', rating: 0 }; window.location.hash='#filter';">View All</span>
+                        <span style="font-size: 0.8rem; color: #aaa; cursor: pointer;" onclick="window.filterState = { type: 'anime', genres: [], keywords: [], companies: [], networks: [], year: 'All', sort: 'recently_updated', rating: 0 }; window.location.hash='#filter';">View All</span>
                     </div>
                     <div class="dashboard-grid" style="margin-bottom: 3rem;">
                         ${recent.slice(0, 15).map(item => `
@@ -1010,7 +1010,7 @@ const UI = {
                         ${UI.buildFilterDropdown('sort', 'Sort by', [
                             { id: 'popularity.desc', label: 'Popularity' },
                             { id: 'vote_average.desc', label: 'Highest Rated' },
-                            { id: 'primary_release_date.desc', label: 'Recently Added' },
+                            { id: 'recently_updated', label: 'Recently Updated' },
                             { id: 'title.asc', label: 'A-Z' },
                             { id: 'title.desc', label: 'Z-A' }
                         ], 'radio')}

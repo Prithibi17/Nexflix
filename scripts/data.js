@@ -62,7 +62,14 @@ const API = {
 
     getAnimeRecent: async (page = 1) => {
         // Recently added/updated
-        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=first_air_date.desc&page=${page}`);
+        // TMDB doesn't allow sorting by "recently updated" (last_air_date). 
+        // Best proxy for "Recent Anime Episodes" is to fetch currently airing shows, sorted by popularity.
+        const today = new Date().toISOString().split('T')[0];
+        const lastMonthDate = new Date();
+        lastMonthDate.setDate(lastMonthDate.getDate() - 30);
+        const lastMonth = lastMonthDate.toISOString().split('T')[0];
+        
+        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&air_date.gte=${lastMonth}&air_date.lte=${today}&sort_by=popularity.desc&page=${page}`);
         return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
     },
 
@@ -283,7 +290,18 @@ const API = {
             }
 
             if (params.sort) {
-                queryParams.push(`sort_by=${params.sort}`);
+                if (params.sort === 'recently_updated') {
+                    const today = new Date().toISOString().split('T')[0];
+                    const lastMonthDate = new Date();
+                    lastMonthDate.setDate(lastMonthDate.getDate() - 30);
+                    const lastMonth = lastMonthDate.toISOString().split('T')[0];
+                    
+                    queryParams.push(`air_date.lte=${today}`);
+                    queryParams.push(`air_date.gte=${lastMonth}`);
+                    queryParams.push(`sort_by=popularity.desc`);
+                } else {
+                    queryParams.push(`sort_by=${params.sort}`);
+                }
             } else {
                 queryParams.push(`sort_by=popularity.desc`);
             }
