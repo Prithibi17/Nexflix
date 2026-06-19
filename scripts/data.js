@@ -39,52 +39,62 @@ const API = {
         }
     },
 
-    // Map AniList Media objects to TMDB search results sequentially to avoid rate limits
+    // Map AniList Media objects to TMDB search results using cache and parallel chunks
     mapAniListToTMDB: async (anilistMediaArray) => {
         const results = [];
-        for (const media of anilistMediaArray) {
-            if (!media) {
-                results.push(null);
-                continue;
-            }
-            // Clean up titles by removing common suffixes/tags that confuse TMDB search
-            const cleanTitle = (title) => {
-                if (!title) return null;
-                let clean = title.split(':')[0].trim();
-                clean = clean.replace(/((\d+(st|nd|rd|th)\s+Season)|(Season\s+\d+)|(Part\s+\d+))/gi, '').trim();
-                return clean;
-            };
+        let mappingCache = {};
+        try { mappingCache = JSON.parse(localStorage.getItem('tmdb_mapping_cache')) || {}; } catch(e) {}
+        
+        const chunkArray = (arr, size) => arr.length ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)] : [];
+        const chunks = chunkArray(anilistMediaArray, 10); // Process 10 at a time
 
-            const searchTitle = cleanTitle(media.title.romaji) || cleanTitle(media.title.english) || cleanTitle(media.title.native);
-            if (!searchTitle) {
-                results.push(null);
-                continue;
-            }
+        for (const chunk of chunks) {
+            const chunkPromises = chunk.map(async (media) => {
+                if (!media) return null;
+                
+                const cleanTitle = (title) => {
+                    if (!title) return null;
+                    let clean = title.split(':')[0].trim();
+                    clean = clean.replace(/((\d+(st|nd|rd|th)\s+Season)|(Season\s+\d+)|(Part\s+\d+))/gi, '').trim();
+                    return clean;
+                };
+
+                const searchTitle = cleanTitle(media.title.romaji) || cleanTitle(media.title.english) || cleanTitle(media.title.native);
+                if (!searchTitle) return null;
+                
+                let tmdbMatch = null;
+                
+                if (mappingCache[searchTitle] !== undefined) {
+                    tmdbMatch = mappingCache[searchTitle] ? JSON.parse(JSON.stringify(mappingCache[searchTitle])) : null;
+                } else {
+                    let searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(searchTitle)}`);
+                    if (!searchData || !searchData.results || searchData.results.length === 0) {
+                        if (media.title.english) {
+                            searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(cleanTitle(media.title.english))}`);
+                        }
+                    }
+                    if (searchData && searchData.results && searchData.results.length > 0) {
+                        const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
+                        tmdbMatch = animationMatch || searchData.results[0];
+                    }
+                    
+                    mappingCache[searchTitle] = tmdbMatch ? JSON.parse(JSON.stringify(tmdbMatch)) : null;
+                    try { localStorage.setItem('tmdb_mapping_cache', JSON.stringify(mappingCache)); } catch(e) {}
+                }
+
+                if (tmdbMatch) {
+                    // Override generic TMDB metadata with specific AniList season metadata
+                    tmdbMatch.anilist_title = media.title.english || media.title.romaji || media.title.native;
+                    if (media.coverImage && media.coverImage.extraLarge) {
+                        tmdbMatch.anilist_poster = media.coverImage.extraLarge;
+                    }
+                }
+                
+                return tmdbMatch;
+            });
             
-            // Artificial delay of 25ms to prevent overwhelming TMDB API (40 req/sec limit)
-            await new Promise(r => setTimeout(r, 25));
-
-            let searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(searchTitle)}`);
-            if (!searchData || !searchData.results || searchData.results.length === 0) {
-                if (media.title.english) {
-                    await new Promise(r => setTimeout(r, 25));
-                    searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(cleanTitle(media.title.english))}`);
-                }
-            }
-            if (searchData && searchData.results && searchData.results.length > 0) {
-                const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
-                const tmdbMatch = animationMatch || searchData.results[0];
-                
-                // Override generic TMDB metadata with specific AniList season metadata
-                tmdbMatch.anilist_title = media.title.english || media.title.romaji || media.title.native;
-                if (media.coverImage && media.coverImage.extraLarge) {
-                    tmdbMatch.anilist_poster = media.coverImage.extraLarge;
-                }
-                
-                results.push(tmdbMatch);
-            } else {
-                results.push(null);
-            }
+            const chunkResults = await Promise.all(chunkPromises);
+            results.push(...chunkResults);
         }
         return results;
     },

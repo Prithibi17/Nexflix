@@ -810,7 +810,19 @@ const UI = {
     // --- Media Dashboard Methods (Movies & Series) ---
     renderMediaDashboard: async (mediaType = 'movie') => {
         const appContent = document.getElementById('app-content');
-        appContent.innerHTML = `<div class="loader" style="margin: 100px auto;"></div>`;
+        appContent.innerHTML = `
+            <div class="skeleton-container" style="padding: 20px;">
+                <div class="skeleton skeleton-hero"></div>
+                <div class="skeleton skeleton-row-title"></div>
+                <div class="skeleton-card-row">
+                    ${Array(6).fill('<div class="skeleton skeleton-card"></div>').join('')}
+                </div>
+                <div class="skeleton skeleton-row-title" style="margin-top: 30px;"></div>
+                <div class="skeleton-card-row">
+                    ${Array(6).fill('<div class="skeleton skeleton-card"></div>').join('')}
+                </div>
+            </div>
+        `;
 
         try {
             const [popular, topRated, newReleasesData] = await Promise.all([
