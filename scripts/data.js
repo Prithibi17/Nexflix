@@ -19,6 +19,60 @@ const API = {
         }
     },
 
+    // AniList GraphQL Fetcher
+    fetchAniList: async (query, variables = {}) => {
+        try {
+            const response = await fetch('https://graphql.anilist.co', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ query, variables })
+            });
+            if (!response.ok) throw new Error('AniList API error');
+            const data = await response.json();
+            return data.data;
+        } catch (error) {
+            console.error("AniList Fetch Error:", error);
+            return null;
+        }
+    },
+
+    // Map AniList Media objects to TMDB search results
+    mapAniListToTMDB: async (anilistMediaArray) => {
+        const promises = anilistMediaArray.map(async (media) => {
+            if (!media) return null;
+            // Clean up titles by removing common suffixes/tags that confuse TMDB search
+            const cleanTitle = (title) => {
+                if (!title) return null;
+                // Remove colons and anything after, typical in anime titles for seasons
+                let clean = title.split(':')[0].trim();
+                // Remove season indicators like "2nd Season" or "Part 2"
+                clean = clean.replace(/((\d+(st|nd|rd|th)\s+Season)|(Season\s+\d+)|(Part\s+\d+))/gi, '').trim();
+                return clean;
+            };
+
+            const searchTitle = cleanTitle(media.title.romaji) || cleanTitle(media.title.english) || cleanTitle(media.title.native);
+            if (!searchTitle) return null;
+            
+            let searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(searchTitle)}`);
+            if (!searchData || !searchData.results || searchData.results.length === 0) {
+                // Try raw english title if cleaned romaji failed
+                if (media.title.english) {
+                    searchData = await API.fetchData(`/search/tv?query=${encodeURIComponent(cleanTitle(media.title.english))}`);
+                }
+            }
+            if (searchData && searchData.results && searchData.results.length > 0) {
+                // Prioritize animation (genre 16) results if possible
+                const animationMatch = searchData.results.find(r => r.genre_ids && r.genre_ids.includes(16));
+                return animationMatch || searchData.results[0];
+            }
+            return null;
+        });
+        return await Promise.all(promises);
+    },
+
     // Format raw TMDB data into our app's structure
     formatMedia: (item, type = 'movie') => {
         if (!item) return null;
@@ -55,79 +109,79 @@ const API = {
     },
 
     getAnimeTrending: async (page = 1) => {
-        // TMDB doesn't have a strict trending by genre, so we use discover sorted by popularity for "trending" anime
-        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=popularity.desc&page=${page}`);
-        return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+        const query = `
+            query ($page: Int) {
+                Page(page: $page, perPage: 20) {
+                    media(type: ANIME, sort: TRENDING_DESC) {
+                        id
+                        title { romaji english native }
+                    }
+                }
+            }
+        `;
+        const data = await API.fetchAniList(query, { page });
+        if (!data || !data.Page || !data.Page.media) return [];
+        
+        const mapped = await API.mapAniListToTMDB(data.Page.media);
+        return mapped.filter(item => item !== null).map(item => API.formatMedia(item, 'tv'));
     },
 
     getAnimeRecent: async (page = 1) => {
-        const today = new Date();
-        const yyyymmdd = d => d.toISOString().split('T')[0];
-        
-        // Fetch shows airing strictly within the last 14 days to build our chronological pool
-        const dateLte = yyyymmdd(today);
-        const pastDate = new Date(today);
-        pastDate.setDate(today.getDate() - 14);
-        const dateGte = yyyymmdd(pastDate);
-
-        // Fetch 3 pages of purely chronological recent anime without relying on popularity
-        const promises = [];
-        for (let p = 1; p <= 3; p++) {
-            promises.push(API.fetchData(`/discover/tv?${ANIME_QUERY}&air_date.lte=${dateLte}&air_date.gte=${dateGte}&page=${p}`));
-        }
-        const pages = await Promise.all(promises);
-        
-        let pool = [];
-        pages.forEach(d => {
-            if (d && d.results) pool = pool.concat(d.results);
-        });
-        
-        if (pool.length === 0) return [];
-
-        // Deduplicate pool
-        const uniquePool = Array.from(new Map(pool.map(item => [item.id, item])).values());
-
-        // Fetch details to get precise last_episode_to_air
-        const detailPromises = uniquePool.map(show => API.fetchData(`/tv/${show.id}`));
-        const detailedShows = await Promise.all(detailPromises);
-        
-        const validShows = detailedShows.filter(show => show && show.last_episode_to_air && show.last_episode_to_air.air_date);
-        
-        // Strict chronological sort based purely on latest episode release time
-        validShows.sort((a, b) => {
-            const dateA = new Date(a.last_episode_to_air.air_date).getTime();
-            const dateB = new Date(b.last_episode_to_air.air_date).getTime();
-            if (dateB !== dateA) {
-                return dateB - dateA; // Newest first
+        const currentTimestamp = Math.floor(Date.now() / 1000);
+        // Using sort: TIME_DESC and airingAt_less to strictly get recently aired
+        const query = `
+            query ($page: Int, $time: Int) {
+                Page(page: $page, perPage: 30) {
+                    airingSchedules(sort: TIME_DESC, airingAt_less: $time) {
+                        episode
+                        airingAt
+                        media {
+                            id
+                            title { romaji english native }
+                        }
+                    }
+                }
             }
-            // Tie-breaker: Episode number (higher is newer)
-            const epA = a.last_episode_to_air.episode_number || 0;
-            const epB = b.last_episode_to_air.episode_number || 0;
-            return epB - epA;
-        });
-
-        const start = (page - 1) * 20;
-        const end = start + 20;
-        const paginated = validShows.slice(start, end);
+        `;
+        const data = await API.fetchAniList(query, { page: page, time: currentTimestamp });
+        if (!data || !data.Page || !data.Page.airingSchedules) return [];
         
-        return paginated.map(item => {
-            const formatted = API.formatMedia(item, 'tv');
-            formatted.latest_episode = item.last_episode_to_air.episode_number;
-            formatted.latest_episode_date = item.last_episode_to_air.air_date;
-            
-            // TMDB only provides dates, so we generate a stable fake "exact time" for UI consistency
-            const hash = (item.id * 13) % 24; 
-            const releaseTime = new Date(item.last_episode_to_air.air_date);
-            releaseTime.setHours(23 - hash); // Sets it to a consistent exact hour today
-            formatted.exact_release_time = releaseTime.toISOString();
-
-            return formatted;
-        });
+        const schedules = data.Page.airingSchedules;
+        const mediaList = schedules.map(s => s.media);
+        const mapped = await API.mapAniListToTMDB(mediaList);
+        
+        const results = [];
+        const seenIds = new Set();
+        
+        for (let i = 0; i < mapped.length; i++) {
+            if (mapped[i] && !seenIds.has(mapped[i].id)) {
+                seenIds.add(mapped[i].id);
+                const formatted = API.formatMedia(mapped[i], 'tv');
+                formatted.latest_episode = schedules[i].episode;
+                formatted.exact_release_time = new Date(schedules[i].airingAt * 1000).toISOString();
+                results.push(formatted);
+            }
+        }
+        
+        return results.slice(0, 20); // Return up to 20 per page
     },
 
     getAnimePopular: async (page = 1) => {
-        const data = await API.fetchData(`/discover/tv?${ANIME_QUERY}&sort_by=vote_count.desc&page=${page}`);
-        return data && data.results ? data.results.map(item => API.formatMedia(item, 'tv')) : [];
+        const query = `
+            query ($page: Int) {
+                Page(page: $page, perPage: 20) {
+                    media(type: ANIME, sort: POPULARITY_DESC) {
+                        id
+                        title { romaji english native }
+                    }
+                }
+            }
+        `;
+        const data = await API.fetchAniList(query, { page });
+        if (!data || !data.Page || !data.Page.media) return [];
+        
+        const mapped = await API.mapAniListToTMDB(data.Page.media);
+        return mapped.filter(item => item !== null).map(item => API.formatMedia(item, 'tv'));
     },
 
     getAnimeTopRated: async (page = 1) => {
